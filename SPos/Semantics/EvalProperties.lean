@@ -27,6 +27,7 @@ theorem Env.rename_succ_cons (ρ : DEnv n) (v : D) :
 
 variable [ScottDomain D Label]
 
+@[simp]
 theorem Tm.eval_rename (t : Tm n) (r : Ren n m) (ρ : DEnv m)
   : ⟦ t.rename r ⟧𝒄 ρ = ⟦ t ⟧𝒄 (ρ.rename r) := by
   induction t generalizing m
@@ -35,29 +36,27 @@ theorem Tm.eval_rename (t : Tm n) (r : Ren n m) (ρ : DEnv m)
 /-- Weakening a term makes it ignore the newest variable. -/
 @[simp]
 theorem Tm.eval_weaken (t : Tm n) (ρ : DEnv n) (d : D) :
-    ⟦ t.weaken ⟧𝒄 (ρ ∷ d) = ⟦ t ⟧𝒄 ρ := by
-  simp only [Tm.weaken, Tm.eval_rename, Env.rename_succ_cons]
+    ⟦ t.weaken ⟧𝒄 (ρ ∷ d) = ⟦ t ⟧𝒄 ρ := by simp
 
+@[simp]
 def Subst.eval (σ : Subst n m) (ρ : DEnv m) : DEnv n :=
   fun i => ⟦ σ i.rev ⟧𝒄 ρ
 
 @[simp]
 theorem Subst.get_eval (σ : Subst n m) (ρ : DEnv m) (i : Fin n) :
-    (σ.eval ρ).get i = ⟦ σ i ⟧𝒄 ρ := by
-  simp [Subst.eval, Env.get, Fin.rev_rev]
+    (σ.eval ρ).get i = ⟦ σ i ⟧𝒄 ρ := by simp
 
 @[simp]
 theorem Subst.eval_lift_cons (σ : Subst n m) (ρ : DEnv m) (d : D) :
     (σ.lift).eval (ρ ∷ d) = σ.eval ρ ∷ d := by
-  apply Env.ext; intro i; induction i using Fin.cases with
-  | zero   => simp
-  | succ j => simp only [Subst.get_eval, Env.get_cons_succ, Subst.lift, Fin.cases_succ, Tm.eval_weaken]
+  apply Env.ext; intro i; induction i using Fin.cases <;> simp [-Tm.weaken]
 
 @[simp]
 theorem Subst.eval_single (u : Tm n) (ρ : DEnv n) :
     (Subst.single u).eval ρ = ρ ∷ ⟦ u ⟧𝒄 ρ := by
-  apply Env.ext; intro i; induction i using Fin.cases <;> simp [Tm.eval]
+  apply Env.ext; intro i; induction i using Fin.cases <;> simp
 
+@[simp]
 theorem Tm.eval_subst (t : Tm n) (σ : Subst n m) (ρ : DEnv m)
   : ⟦ t.subst σ ⟧𝒄 ρ = ⟦ t ⟧𝒄 (σ.eval ρ) := by
   induction t generalizing m
@@ -65,5 +64,4 @@ theorem Tm.eval_subst (t : Tm n) (σ : Subst n m) (ρ : DEnv m)
 
 @[simp]
 theorem Tm.eval_subst1 (t : Tm (n + 1)) (u : Tm n) (ρ : DEnv n) :
-    ⟦ t [/ u ] ⟧𝒄 ρ = ⟦ t ⟧𝒄 (ρ ∷ ⟦ u ⟧𝒄 ρ) := by
-  simp only [Tm.subst1, Tm.eval_subst, Subst.eval_single]
+    ⟦ t [/ u ] ⟧𝒄 ρ = ⟦ t ⟧𝒄 (ρ ∷ ⟦ u ⟧𝒄 ρ) := by simp

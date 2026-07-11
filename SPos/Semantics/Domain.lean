@@ -50,7 +50,7 @@ def ScottDomain.mk_lam [ScottDomain D F] : (D →𝒄 D) →𝒄 D :=
 notation "inj→" => ScottDomain.mk_lam
 
 @[simp]
-theorem ScottDomain.flat_ret_bot [ScottDomain D F] : flat.ret (⊥ : D) = .bot := by
+theorem ScottDomain.flat_ret_bot [ScottDomain D F] : flat.ret (⊥ : D) = ⊥ := by
   have h : flat.ret (⊥ : D) ≤ Flat.bot := by
     have := flat.ret.monotone (bot_le : (⊥ : D) ≤ flat.inj .bot)
     rwa [flat.ret_inj] at this
