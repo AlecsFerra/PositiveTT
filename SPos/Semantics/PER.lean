@@ -65,6 +65,21 @@ instance {R : PER D} {E : (d : D) → PER (M d)}
 
 infixr:25 " →ₚ " => PERRespND
 
+@[simp]
+theorem PERRespND.mk_apply {R : PER D} {E : PER S} (f : D → S)
+    (resp : ∀ a b, (a ~ b ∈ₚ R) → (f a) ~ (f b) ∈ₚ E) (a : D) :
+    (PERRespND.mk R E f resp) a = f a := rfl
+
+/-- Two PERs with the same relation are equal. -/
+@[ext]
+theorem PER.ext {R S : PER D} (h : R.rel = S.rel) : R = S := by
+  cases R; cases S; cases h; rfl
+
+/-- A family into the discrete PER is constant on equivalence classes. -/
+theorem PERResp.eq_of_rel {A : PER D} (B : A →ₚ PER.diag S)
+    {a b : D} (h : a ~ b ∈ₚ A) : B a = B b :=
+  B.respRelation a b h
+
 /-- A partial equivalence relation: symmetric and transitive, but not necessarily
 reflexive. Its domain is `{a | R a a}`; on the domain it is an equivalence. -/
 structure IsPER {D : Type u} (R : D → D → Prop) : Prop where
