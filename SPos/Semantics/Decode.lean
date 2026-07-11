@@ -38,8 +38,6 @@ theorem DecodeAux.inv {k : Nat} {U' : ∀ ℓ, ℓ < k → D → D → Prop} {c 
 PER `X`. Universes below `k` are decoded by recursion on the level. -/
 def Decode (k : Nat) : D → D → (D → D → Prop) → Prop :=
   DecodeAux k fun ℓ _ => fun c c' => ∃ X, Decode ℓ c c' X
-termination_by k
-decreasing_by assumption
 
 /-- The universe at level `ℓ`, itself a PER on codes: two codes are related iff
 they decode (at level `ℓ`) to a common PER. -/
