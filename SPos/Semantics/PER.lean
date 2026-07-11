@@ -1,8 +1,8 @@
-
-structure PER (D : Type u) where
-  R     : D → D → Prop
-  symm  : Symm R
-  trans : Transitive R
+/-- A partial equivalence relation: symmetric and transitive, but not necessarily
+reflexive. Its domain is `{a | R a a}`; on the domain it is an equivalence. -/
+structure IsPER {D : Type u} (R : D → D → Prop) : Prop where
+  symm  : ∀ {a b : D}, R a b → R b a
+  trans : ∀ {a b c : D}, R a b → R b c → R a c
 
 namespace IsPER
 
