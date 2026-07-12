@@ -1,4 +1,4 @@
-import SPos.Syntax
+import SPos.Syntax.Syntax
 
 abbrev Ctx := Env Tm
 

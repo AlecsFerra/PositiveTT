@@ -1,5 +1,5 @@
 import SPos.Semantics.Eval
-import SPos.SyntaxProperties
+import SPos.Syntax.SyntaxProperties
 
 open ScottDomain OmegaCompletePartialOrder ωScottContinuous
 

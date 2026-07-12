@@ -1,5 +1,6 @@
 import Mathlib.Order.OmegaCompletePartialOrder
-import SPos.Syntax
+
+import SPos.Syntax.Syntax
 
 open OmegaCompletePartialOrder
 

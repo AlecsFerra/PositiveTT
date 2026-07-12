@@ -1,8 +1,8 @@
-import SPos.Semantics.Domain
+import SPos.Semantics.DomainTheory.Domain
 import SPos.Semantics.ValueDomain
 
-import SPos.Syntax
-import SPos.SyntaxProperties
+import SPos.Syntax.Syntax
+import SPos.Syntax.SyntaxProperties
 
 open ScottDomain OmegaCompletePartialOrder ωScottContinuous
 

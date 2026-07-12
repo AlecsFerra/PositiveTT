@@ -1,7 +1,7 @@
 import Mathlib.Order.OmegaCompletePartialOrder
 
-import SPos.Semantics.Continuous
-import SPos.Semantics.FlatDomain
+import SPos.Semantics.DomainTheory.Continuous
+import SPos.Semantics.DomainTheory.FlatDomain
 
 open OmegaCompletePartialOrder
 

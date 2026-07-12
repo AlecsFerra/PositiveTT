@@ -1,191 +1,157 @@
 import SPos.Semantics.ValueDomain
-import SPos.Semantics.PER
+import SPos.Structure.PER
 import SPos.Semantics.Type
 
-open OmegaCompletePartialOrder
+open OmegaCompletePartialOrder ScottDomain
 
 variable {D : Type u} [ScottDomain D Label]
 
-namespace ScottDomain
-
-/-- One layer of the decoding relation. `DecodeAux k U' c c' X` reads: `c` and `c'`
-are equal type-codes denoting the partial equivalence relation `X` on values;
-`U'` gives the universes strictly below `k`.
-
-The judgment is on *pairs* of codes: this is what lets the fundamental theorem
-relate a type's denotations in two different environments, which the `app` case
-needs. Codomain families of `Pi` codes are PER-respecting maps
-(`A →ₚ PER.diag (PER D)`), so every denoted relation is a PER by construction. -/
 inductive DecodeAux (k : Nat) (U' : ∀ ℓ, ℓ < k → PER D) : D → D → PER D → Prop where
-| univ {ℓ : Nat} (h : ℓ < k) : DecodeAux k U' (mkU ℓ) (mkU ℓ) (U' ℓ h)
-| pi {a a' : D} {A : PER D} {f f' : D →𝒄 D} {B : A →ₚ PER.diag (PER D)} :
-    DecodeAux k U' a a' A →
-    (∀ {d d' : D}, (d ~ d' ∈ₚ A) → DecodeAux k U' (f d) (f' d') (B d)) →
-    DecodeAux k U' (Π̂ a f) (Π̂ a' f') (PER.pi A B)
+| univ (h : ℓ < k) : DecodeAux k U' (mkU ℓ) (mkU ℓ) (U' ℓ h)
+| pi : DecodeAux k U' a a' A →
+        (∀ {d d' : D}, (d ~ d' ∈ₚ A) → DecodeAux k U' (f d) (f' d') (B d)) →
+        DecodeAux k U' (Π̂ a f) (Π̂ a' f') (PER.pi A B)
 
-/-- Case analysis for `DecodeAux`, with the codes kept as variables so it can be
-used against any concrete codes via the discrimination lemmas. -/
-theorem DecodeAux.inv {k : Nat} {U' : ∀ ℓ, ℓ < k → PER D} {c c' : D}
-    {X : PER D} (h : DecodeAux k U' c c' X) :
-    (∃ ℓ, ∃ hℓ : ℓ < k, c = mkU ℓ ∧ c' = mkU ℓ ∧ X = U' ℓ hℓ) ∨
-    (∃ (a a' : D) (A : PER D) (f f' : D →𝒄 D) (B : A →ₚ PER.diag (PER D)),
-      c = Π̂ a f ∧ c' = Π̂ a' f' ∧ DecodeAux k U' a a' A ∧
-      (∀ {d d' : D}, (d ~ d' ∈ₚ A) → DecodeAux k U' (f d) (f' d') (B d)) ∧
-      X = PER.pi A B) := by
-  cases h with
-  | univ hℓ => exact .inl ⟨_, hℓ, rfl, rfl, rfl⟩
-  | pi hA hB => exact .inr ⟨_, _, _, _, _, _, rfl, rfl, hA, hB, rfl⟩
+-- Forded Decode
+inductive DecodeAux.Inv (k : Nat) (U' : ∀ ℓ, ℓ < k → PER D) (c c' : D) (X : PER D) : Prop where
+| univ (hℓ : ℓ < k) (_ : c = mkU ℓ) (_ : c' = mkU ℓ)
+           (_ : X = U' ℓ hℓ)
+| pi
+    (_ : c = Π̂ a f) (_ : c' = Π̂ a' f')
+    (_ : DecodeAux k U' a a' A)
+    (_ : ∀ {d d' : D}, (d ~ d' ∈ₚ A) → DecodeAux k U' (f d) (f' d') (B d))
+    (_ : X = PER.pi A B)
 
-/-- Determinism: a (left) code decodes to at most one PER, whatever it is paired
-with, at any level, and for any compatible families of lower universes. -/
-private theorem DecodeAux.det' {k : Nat} {U' : ∀ ℓ, ℓ < k → PER D} {c c₁ : D}
-    {X : PER D} (h : DecodeAux k U' c c₁ X) :
-    ∀ {k' : Nat} {U'' : ∀ ℓ, ℓ < k' → PER D}
-      (_ : ∀ ℓ (hk : ℓ < k) (hk' : ℓ < k'), U' ℓ hk = U'' ℓ hk')
-      {c₂ : D} {Y : PER D}, DecodeAux k' U'' c c₂ Y → X = Y := by
-  induction h with
-  | univ hℓ =>
-    intro k' U'' hU c₂ Y h'
-    rcases h'.inv with ⟨ℓ', hℓ', hc, -, rfl⟩ | ⟨a, a', A, f, f', B, hc, -, -, -, -⟩
-    · obtain rfl := mkU_inj hc
-      exact hU _ hℓ hℓ'
-    · exact absurd hc (mkU_ne_mkPi _ _ _)
-  | @pi a a' A f f' B hA hB ihA ihB =>
-    intro k' U'' hU c₂ Y h'
-    rcases h'.inv with ⟨ℓ', hℓ', hc, -, -⟩ | ⟨a1, a2, A1, g1, g2, B1, hc, -, hA1, hB1, rfl⟩
-    · exact absurd hc.symm (mkU_ne_mkPi _ _ _)
-    · obtain ⟨rfl, rfl⟩ := mkPi_inj hc
-      obtain rfl := ihA hU hA1
-      apply PER.ext
-      funext g g'
-      apply propext
+theorem DecodeAux.inv {X : PER D} (h : DecodeAux k U' c c' X)
+  : DecodeAux.Inv k U' c c' X := by cases h with
+  | univ hℓ  => apply DecodeAux.Inv.univ <;> (try assumption) <;> simp
+  | pi hA hB => apply DecodeAux.Inv.pi   <;> (try assumption) <;> simp
+
+private theorem DecodeAux.det {U₁ : ∀ ℓ, ℓ < ℓ₁ → PER D} {U₂ : ∀ ℓ, ℓ < ℓ₂ → PER D}
+  (_ : ∀ ℓ (hk₁ : ℓ < ℓ₁) (hk₂ : ℓ < ℓ₂), U₁ ℓ hk₁ = U₂ ℓ hk₂)
+  (h₁ : DecodeAux ℓ₁ U₁ c c₁ X) (h₂ : DecodeAux ℓ₂ U₂ c c₂ Y)
+  : X = Y := by induction h₁ generalizing c₂ Y with
+  | univ =>
+    rcases h₂.inv with ⟨_, hc⟩ | hc
+    · obtain rfl := mkU_inj hc; simp_all
+    · apply absurd hc; apply mkU_ne_mkPi
+  | pi _ _ ihA ihB =>
+    rcases h₂.inv with ⟨_, hc⟩ | ⟨hc, -, hA1, hB1, rfl⟩
+    · apply absurd hc.symm; apply mkU_ne_mkPi
+    · rcases mkPi_inj hc with ⟨rfl, rfl⟩; rcases ihA hA1
+      apply PER.ext; funext; apply propext
       constructor
-      · intro hg x y hxy
-        exact ihB hxy hU (hB1 hxy) ▸ hg x y hxy
-      · intro hg x y hxy
-        exact (ihB hxy hU (hB1 hxy)).symm ▸ hg x y hxy
+      · intro hg _ _ hxy; rw [← ihB hxy (hB1 hxy)]; apply hg; assumption
+      · intro hg _ _ hxy; rw [  ihB hxy (hB1 hxy)]; apply hg; assumption
 
-/-- Symmetry and left-composition of decoding for a fixed layer, proved
-simultaneously. Coherence of the codomain family is its `respRelation` field. -/
-private theorem DecodeAux.package {k : Nat} {U' : ∀ ℓ, ℓ < k → PER D} {c c' : D}
-    {X : PER D} (h : DecodeAux k U' c c' X) :
-    DecodeAux k U' c' c X ∧
-    (∀ {c'' : D} {Y : PER D}, DecodeAux k U' c' c'' Y → DecodeAux k U' c c'' X) := by
+
+private theorem DecodeAux.symm {X : PER D}
+  (h : DecodeAux k U' c c' X) : DecodeAux k U' c' c X := by
   induction h with
+  | univ hℓ => exact .univ hℓ
+  | pi _ _ _ ihB =>
+    constructor; assumption
+    intro _ _ hd
+    rw [PERResp.eq_of_rel _ hd]
+    exact ihB (PER.symm _ hd)
+
+private theorem DecodeAux.trans {X : PER D} {Y : PER D}
+  (h₁ : DecodeAux k U' c c' X) (h₂ : DecodeAux k U' c' c'' Y)
+  : DecodeAux k U' c c'' X := by
+  induction h₁ generalizing c'' Y with
   | univ hℓ =>
-    refine ⟨.univ hℓ, ?_⟩
-    intro c'' Y h'
-    rcases h'.inv with ⟨ℓ', hℓ', hc, rfl, rfl⟩ | ⟨_, _, _, _, _, _, hc, _, _, _, _⟩
+    rcases h₂.inv with ⟨-, hc, rfl, rfl⟩ | ⟨hc, -, -, -, -⟩
     · obtain rfl := mkU_inj hc
       exact .univ hℓ
     · exact absurd hc (mkU_ne_mkPi _ _ _)
-  | @pi a a' A f f' B hA hB ihA ihB =>
-    obtain ⟨symA, compA⟩ := ihA
-    refine ⟨.pi symA ?_, ?_⟩
-    · intro d d' hdd'
-      exact (B.eq_of_rel hdd').symm ▸ (ihB (A.symm hdd')).1
-    · intro c'' Y h'
-      rcases h'.inv with ⟨ℓ', hℓ', hc, -, -⟩ | ⟨a1, a2, A1, g1, g2, B1, hc, rfl, hA1, hB1, rfl⟩
-      · exact absurd hc.symm (mkU_ne_mkPi _ _ _)
-      · obtain ⟨rfl, rfl⟩ := mkPi_inj hc
-        obtain rfl := DecodeAux.det' symA (fun _ _ _ => rfl) hA1
-        refine .pi (compA hA1) ?_
-        intro d d' hdd'
-        exact (ihB (A.refl_left hdd')).2 (hB1 hdd')
+  | pi hA hB ihA ihB =>
+    rcases h₂.inv with ⟨_, hc, _, _⟩ | ⟨hc, rfl, hA1, hB1, rfl⟩
+    · exact absurd hc.symm (mkU_ne_mkPi _ _ _)
+    · rcases mkPi_inj hc with ⟨rfl, rfl⟩
+      obtain rfl := DecodeAux.det (by simp) hA.symm hA1
+      refine .pi (ihA hA1) ?_
+      intro _ _ hdd; exact ihB (PER.refl_left _ hdd) (hB1 hdd)
 
-/-- The decoding relation together with its symmetry and composition properties,
-tied through the universe hierarchy by recursion on the level: the universe below
-is a PER *because* decoding below is symmetric and composable. -/
-private def DecodePkg : (k : Nat) → { Dec : D → D → PER D → Prop //
-    (∀ {c c' : D} {X : PER D}, Dec c c' X → Dec c' c X) ∧
-    (∀ {c c' c'' : D} {X Y : PER D}, Dec c c' X → Dec c' c'' Y → Dec c c'' X) }
-  | k =>
-    ⟨DecodeAux k (fun ℓ _ =>
-      { rel := fun c c' => ∃ X : PER D, (DecodePkg ℓ).1 c c' X
-        sym := ⟨fun _ _ h => h.elim fun X hX => ⟨X, (DecodePkg ℓ).2.1 hX⟩⟩
-        tra := ⟨fun _ _ _ h h' => h.elim fun X hX =>
-          h'.elim fun _ hY => ⟨X, (DecodePkg ℓ).2.2 hX hY⟩⟩ }),
-     fun {_ _ _} h => (DecodeAux.package h).1,
-     fun {_ _ _ _ _} h h' => (DecodeAux.package h).2 h'⟩
-termination_by k => k
-decreasing_by all_goals assumption
 
-/-- `Decode k c c' X`: at level `k`, `c` and `c'` are equal type-codes denoting the
-PER `X`. -/
-def Decode (k : Nat) : D → D → PER D → Prop :=
-  (DecodePkg k).1
-
-theorem Decode.symm {k : Nat} {c c' : D} {X : PER D}
-    (h : Decode k c c' X) : Decode k c' c X :=
-  (DecodePkg k).2.1 h
-
-theorem Decode.trans {k : Nat} {c c' c'' : D} {X Y : PER D}
-    (h : Decode k c c' X) (h' : Decode k c' c'' Y) : Decode k c c'' X :=
-  (DecodePkg k).2.2 h h'
-
-theorem Decode.refl_left {k : Nat} {c c' : D} {X : PER D}
-    (h : Decode k c c' X) : Decode k c c X :=
-  h.trans h.symm
-
-/-- The universe at level `ℓ`, itself a PER on codes: two codes are related iff
-they decode (at level `ℓ`) to a common PER. -/
-def U (ℓ : Nat) : PER D where
-  rel c c' := ∃ X : PER D, Decode ℓ c c' X
-  sym := ⟨fun _ _ ⟨X, hX⟩ => ⟨X, hX.symm⟩⟩
-  tra := ⟨fun _ _ _ ⟨X, hX⟩ ⟨_, hY⟩ => ⟨X, hX.trans hY⟩⟩
+def U (k : Nat) : PER D where
+  rel c c' := ∃ X : PER D, DecodeAux k (fun ℓ _ => U ℓ) c c' X
+  sym := ⟨ fun _ _ h =>
+    h.elim fun X hX => ⟨X, DecodeAux.symm hX⟩
+  ⟩
+  tra := ⟨ fun _ _ _ h h' =>
+    h.elim fun X hX => h'.elim fun _ hY => ⟨X, DecodeAux.trans hX hY⟩
+  ⟩
 
 @[simp]
-theorem mem_U {ℓ : Nat} {c c' : D} : (c ~ c' ∈ₚ U ℓ) ↔ ∃ X : PER D, Decode ℓ c c' X :=
-  Iff.rfl
+def Decode (k : Nat) (c c' : D) (X : PER D) : Prop :=
+  DecodeAux k (fun ℓ _ => U ℓ) c c' X
 
-theorem decode_iff {k : Nat} {c c' : D} {X : PER D} :
-    Decode k c c' X ↔ DecodeAux k (fun ℓ _ => U ℓ) c c' X := by
-  unfold Decode
-  rw [DecodePkg]
-  exact Iff.rfl
+theorem Decode.symm {X : PER D} (h : Decode k c c' X) : Decode k c' c X :=
+  DecodeAux.symm h
 
-theorem Decode.det {k k' : Nat} {c c₁ c₂ : D} {X Y : PER D}
-    (h : Decode k c c₁ X) (h' : Decode k' c c₂ Y) : X = Y :=
-  DecodeAux.det' (decode_iff.mp h) (fun _ _ _ => rfl) (decode_iff.mp h')
+theorem Decode.trans  {X Y : PER D} (h : Decode k c c' X) (h' : Decode k c' c'' Y)
+  : Decode k c c'' X := DecodeAux.trans h h'
 
-theorem Decode.univ {ℓ k : Nat} (h : ℓ < k) : Decode k (mkU ℓ : D) (mkU ℓ) (U ℓ) :=
-  decode_iff.mpr (.univ h)
+theorem Decode.refl_left {X : PER D} (h : Decode k c c' X) : Decode k c c X :=
+  h.trans h.symm
 
-theorem Decode.pi {k : Nat} {a a' : D} {A : PER D} {f f' : D →𝒄 D}
+theorem Decode.det {X Y : PER D} (h : Decode ℓ₁ c c₁ X) (h' : Decode ℓ₂ c c₂ Y) : X = Y :=
+  DecodeAux.det (by simp) h h'
+
+@[simp]
+theorem mem_U : (c ~ c' ∈ₚ U ℓ) ↔ ∃ X : PER D, Decode ℓ c c' X := by
+  unfold U Decode; exact Iff.rfl
+
+theorem Decode.univ (h : ℓ < k) : Decode k (mkU ℓ : D) (mkU ℓ) (U ℓ) := by
+  simp ; exact (.univ h)
+
+theorem Decode.pi {A : PER D}
     {B : A →ₚ PER.diag (PER D)} (hA : Decode k a a' A)
     (hB : ∀ {d d' : D}, (d ~ d' ∈ₚ A) → Decode k (f d) (f' d') (B d)) :
-    Decode k (Π̂ a f) (Π̂ a' f') (PER.pi A B) :=
-  decode_iff.mpr (.pi (decode_iff.mp hA) fun hdd' => decode_iff.mp (hB hdd'))
+    Decode k (Π̂ a f) (Π̂ a' f') (PER.pi A B) := by
+  simp; exact .pi  hA (fun hdd' => hB hdd')
 
-/-- Cumulativity: decoding is preserved when going up in the universe hierarchy. -/
-theorem Decode.cumul {k k' : Nat} {c c' : D} {X : PER D}
-    (h : Decode k c c' X) (hk : k ≤ k') : Decode k' c c' X := by
-  rw [decode_iff] at h ⊢
-  induction h with
+theorem Decode.cumul {X : PER D} (h : Decode k c c' X) (hk : k ≤ k')
+  : Decode k' c c' X := by simp; induction h with
   | univ hℓ => exact .univ (hℓ.trans_le hk)
   | pi hA hB ihA ihB => exact .pi ihA fun hdd' => ihB hdd'
+inductive Decode.Inv (k : Nat) (c c' : D) (X : PER D) : Prop where
+| univ (hℓ : ℓ < k) (hc : c = mkU ℓ) (hc' : c' = mkU ℓ) (hX : X = U ℓ)
+| pi (hc : c = Π̂ a f) (hc' : c' = Π̂ a' f')
+    (dom : Decode k a a' A)
+    (cod : ∀ {d d' : D}, (d ~ d' ∈ₚ A) → Decode k (f d) (f' d') (B d))
+    (hX : X = PER.pi A B)
+
+theorem Decode.inv {k : Nat} {c c' : D} {X : PER D}
+    (h : Decode k c c' X) : Decode.Inv k c c' X := by
+  simp at *
+  rcases h.inv with ⟨hℓ, hc, hc', rfl⟩ | ⟨hc, hc', hA, hB, rfl⟩
+  · constructor <;> (try assumption); simp
+  · exact .pi hc hc' hA (fun hdd' => hB hdd') rfl
+
+inductive Decode.UnivInv (k ℓ : Nat) (c' : D) (X : PER D) : Prop where
+| mk (lt : ℓ < k) (code : c' = mkU ℓ) (per : X = U ℓ)
 
 theorem decode_univ_inv {k ℓ : Nat} {c' : D} {X : PER D}
-    (h : Decode k (mkU ℓ : D) c' X) : ℓ < k ∧ c' = mkU ℓ ∧ X = U ℓ := by
-  rcases (decode_iff.mp h).inv with ⟨ℓ', hℓ', hc, rfl, rfl⟩ | ⟨_, _, _, _, _, _, hc, _, _, _, _⟩
-  · obtain rfl := mkU_inj hc
-    exact ⟨hℓ', rfl, rfl⟩
+    (h : Decode k (mkU ℓ : D) c' X) : Decode.UnivInv k ℓ c' X := by
+  rcases h.inv with ⟨hℓ, hc, rfl, rfl⟩ | ⟨hc, -, -, -, -⟩
+  · obtain rfl := mkU_inj hc; constructor <;> (try assumption); simp
   · exact absurd hc (mkU_ne_mkPi _ _ _)
 
+inductive Decode.PiInv (k : Nat) (a : D) (f : D →𝒄 D) (c' : D) (X : PER D) : Prop where
+| mk (a' : D) (f' : D →𝒄 D) (A : PER D) (B : A →ₚ PER.diag (PER D))
+    (code : c' = Π̂ a' f')
+    (dom  : Decode k a a' A)
+    (cod  : ∀ {d d' : D}, (d ~ d' ∈ₚ A) → Decode k (f d) (f' d') (B d))
+    (per  : X = PER.pi A B)
+
 theorem decode_pi_inv {k : Nat} {a : D} {f : D →𝒄 D} {c' : D} {X : PER D}
-    (h : Decode k (Π̂ a f) c' X) :
-    ∃ (a' : D) (f' : D →𝒄 D) (A : PER D) (B : A →ₚ PER.diag (PER D)),
-      c' = Π̂ a' f' ∧ Decode k a a' A ∧
-      (∀ {d d' : D}, (d ~ d' ∈ₚ A) → Decode k (f d) (f' d') (B d)) ∧
-      X = PER.pi A B := by
-  rcases (decode_iff.mp h).inv with ⟨ℓ, hℓ, hc, -, -⟩ | ⟨a1, a2, A, g1, g2, B, hc, rfl, hA, hB, rfl⟩
+    (h : Decode k (Π̂ a f) c' X) : Decode.PiInv k a f c' X := by
+  rcases h.inv with ⟨-, hc, -, -⟩ | ⟨hc, rfl, hA, hB, rfl⟩
   · exact absurd hc.symm (mkU_ne_mkPi _ _ _)
   · obtain ⟨rfl, rfl⟩ := mkPi_inj hc
-    exact ⟨a2, g2, A, B, rfl, decode_iff.mpr hA,
-      fun hdd' => decode_iff.mpr (hB hdd'), rfl⟩
+    constructor <;> (try assumption); rfl; simp
 
-/-- `El ℓ c`: the PER denoted by the code `c` at level `ℓ`
-(empty if `c` does not decode). -/
 def El (ℓ : Nat) (c : D) : PER D where
   rel x y := ∃ X : PER D, Decode ℓ c c X ∧ (x ~ y ∈ₚ X)
   sym := ⟨fun _ _ ⟨X, hX, hxy⟩ => ⟨X, hX, X.symm hxy⟩⟩
@@ -200,8 +166,6 @@ theorem El_eq_of_decode {ℓ : Nat} {c c' : D} {X : PER D}
 
 /-- Related codes in the universe decode to the `El` of the left one. -/
 theorem Decode.el {ℓ : Nat} {c c' : D} (h : c ~ c' ∈ₚ U ℓ) : Decode ℓ c c' (El ℓ c) := by
-  obtain ⟨X, hX⟩ := h
+  obtain ⟨X, hX⟩ := mem_U.mp h
   rw [El_eq_of_decode hX]
   exact hX
-
-end ScottDomain

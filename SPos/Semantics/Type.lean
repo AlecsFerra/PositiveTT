@@ -1,5 +1,5 @@
-import SPos.Semantics.PER
-import SPos.Semantics.Domain
+import SPos.Structure.PER
+import SPos.Semantics.DomainTheory.Domain
 import SPos.Semantics.ValueDomain
 
 variable
@@ -25,6 +25,3 @@ def PER.pi (dom : PER D) (cod : dom →ₚ PER.diag (PER D)) : PER D where
     rw [hcod]
     exact hgh y y hyy
   ⟩
-
--- theorem pi_codes_per (A : Rel D D) (B : D → Rel D D) :
---     IsPER A → (∀ a, IsPER (B a)) → IsPER (pi_codes A B) := by

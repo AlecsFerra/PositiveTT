@@ -1,4 +1,4 @@
-import SPos.Semantics.Domain
+import SPos.Semantics.DomainTheory.Domain
 
 open ScottDomain OmegaCompletePartialOrder ωScottContinuous
 

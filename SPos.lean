@@ -1,14 +1,13 @@
-import SPos.Syntax
-import SPos.SyntaxProperties
-
-import SPos.Typing.WellTyped
-
 import SPos.Semantics.Decode
-import SPos.Semantics.Domain
+import SPos.Semantics.DomainTheory.Continuous
+import SPos.Semantics.DomainTheory.Domain
+import SPos.Semantics.DomainTheory.FlatDomain
 import SPos.Semantics.Eval
 import SPos.Semantics.EvalProperties
-import SPos.Semantics.PER
 import SPos.Semantics.Type
 import SPos.Semantics.ValueDomain
-
+import SPos.Structure.PER
+import SPos.Syntax.Syntax
+import SPos.Syntax.SyntaxProperties
 import SPos.Typing.Sound
+import SPos.Typing.WellTyped

@@ -1,5 +1,5 @@
 import SPos.Typing.WellTyped
-import SPos.SyntaxProperties
+import SPos.Syntax.SyntaxProperties
 import SPos.Semantics.EvalProperties
 import SPos.Semantics.Decode
 
@@ -56,13 +56,13 @@ theorem WfTm.sound : ∀ {n : Nat} {Γ : Ctx n} {t τ : Tm n}, (Γ ⊢ t ∶ τ)
   | _, _, _, _, .u (ℓ := ℓ) _, ρ, ρ', _ => by
     refine ⟨ℓ + 2, U (ℓ + 1), ?_, ?_⟩
     · simpa [Tm.eval] using Decode.univ (D := D) (ℓ := ℓ + 1) (by omega)
-    · refine ⟨U ℓ, ?_⟩
+    · refine mem_U.mpr ⟨U ℓ, ?_⟩
       simpa [Tm.eval] using Decode.univ (D := D) (ℓ := ℓ) (k := ℓ + 1) (by omega)
   | _, Γ, .pi τ υ, _, .pi (ℓ₁ := ℓ₁) (ℓ₂ := ℓ₂) hτ hυ, ρ, ρ', hρ => by
     obtain ⟨k, Xτ, hk, hmemτ⟩ := WfTm.sound hτ hρ
     simp only [Tm.eval, mk_lam_apply] at hk
     obtain ⟨-, -, rfl⟩ := decode_univ_inv hk
-    obtain ⟨A, hA⟩ := hmemτ
+    obtain ⟨A, hA⟩ := mem_U.mp hmemτ
     have hB : ∀ {d d' : D}, (d ~ d' ∈ₚ A) →
         Decode ℓ₂ (⟦ υ ⟧𝒄 (ρ ∷ d)) (⟦ υ ⟧𝒄 (ρ' ∷ d')) (El ℓ₂ (⟦ υ ⟧𝒄 (ρ ∷ d))) := by
       intro d d' hdd'
@@ -76,7 +76,7 @@ theorem WfTm.sound : ∀ {n : Nat} {Γ : Ctx n} {t τ : Tm n}, (Γ ⊢ t ∶ τ)
       obtain ⟨k', Xυ, hk', hmemυ⟩ := WfTm.sound hυ (Models.cons hρ.refl_left hA.refl_left hdd')
       simp only [Tm.eval, mk_lam_apply] at hk'
       obtain ⟨-, -, rfl⟩ := decode_univ_inv hk'
-      obtain ⟨Y, hY⟩ := hmemυ
+      obtain ⟨Y, hY⟩ := mem_U.mp hmemυ
       rw [El_eq_of_decode hY, El_eq_of_decode hY.symm]
     have hpi := Decode.pi
       (f := ƛ[ by fun_prop ] d ↦ ⟦ υ ⟧𝒄 (ρ ∷ d)) (f' := ƛ[ by fun_prop ] d ↦ ⟦ υ ⟧𝒄 (ρ' ∷ d))
@@ -85,12 +85,12 @@ theorem WfTm.sound : ∀ {n : Nat} {Γ : Ctx n} {t τ : Tm n}, (Γ ⊢ t ∶ τ)
       (fun {d d'} hdd' => by simpa using (hB hdd').cumul (le_max_right ℓ₁ ℓ₂))
     refine ⟨max ℓ₁ ℓ₂ + 1, U (max ℓ₁ ℓ₂), ?_, ?_⟩
     · simpa [Tm.eval] using Decode.univ (D := D) (ℓ := max ℓ₁ ℓ₂) (by omega)
-    · exact ⟨_, by simpa [Tm.eval] using hpi⟩
+    · exact mem_U.mpr ⟨_, by simpa [Tm.eval] using hpi⟩
   | _, Γ, .lam τ t, _, .lam (ℓ := ℓ₁) (ℓ' := ℓ₂) (σ := σ) hτ hσ ht, ρ, ρ', hρ => by
     obtain ⟨k, Xτ, hk, hmemτ⟩ := WfTm.sound hτ hρ
     simp only [Tm.eval, mk_lam_apply] at hk
     obtain ⟨-, -, rfl⟩ := decode_univ_inv hk
-    obtain ⟨A, hA⟩ := hmemτ
+    obtain ⟨A, hA⟩ := mem_U.mp hmemτ
     have hB : ∀ {d d' : D}, (d ~ d' ∈ₚ A) →
         Decode ℓ₂ (⟦ σ ⟧𝒄 (ρ ∷ d)) (⟦ σ ⟧𝒄 (ρ' ∷ d')) (El ℓ₂ (⟦ σ ⟧𝒄 (ρ ∷ d))) := by
       intro d d' hdd'
@@ -104,7 +104,7 @@ theorem WfTm.sound : ∀ {n : Nat} {Γ : Ctx n} {t τ : Tm n}, (Γ ⊢ t ∶ τ)
       obtain ⟨k', Xσ, hk', hmemσ⟩ := WfTm.sound hσ (Models.cons hρ.refl_left hA.refl_left hdd')
       simp only [Tm.eval, mk_lam_apply] at hk'
       obtain ⟨-, -, rfl⟩ := decode_univ_inv hk'
-      obtain ⟨Y, hY⟩ := hmemσ
+      obtain ⟨Y, hY⟩ := mem_U.mp hmemσ
       rw [El_eq_of_decode hY, El_eq_of_decode hY.symm]
     have hpi := Decode.pi
       (f := ƛ[ by fun_prop ] d ↦ ⟦ σ ⟧𝒄 (ρ ∷ d)) (f' := ƛ[ by fun_prop ] d ↦ ⟦ σ ⟧𝒄 (ρ' ∷ d))
