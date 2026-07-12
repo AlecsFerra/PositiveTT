@@ -234,7 +234,7 @@ theorem DefEq.sound : ∀ {n : Nat} {Γ : Ctx n} {t t' τ : Tm n}, (Γ ⊢ t ≡
     refine ⟨k, B (⟦ m ⟧𝒄 ρ), ?_, ?_⟩
     · simpa only [Tm.eval_subst1, mk_lam_apply] using hB hmems
     · simpa [Tm.eval, Tm.eval_subst1, ScottDomain.lam.ret_inj] using hmemt _ _ hmems
-  | n, _, t, _, _, .eta ht, ρ, ρ', hρ => by
+  | n, _, t, _, _, .η ht, ρ, ρ', hρ => by
     obtain ⟨ℓ, X, hX, hf⟩ := WfTm.sound ht hρ
     simp only [Tm.eval, mk_lam_apply] at hX
     obtain ⟨a', f', A, B, hc', hA, hB, rfl⟩ := decode_pi_inv hX

@@ -46,11 +46,11 @@ theorem DefEq.rename (heq : Γ ⊢ t ≡ t' ∶ τ) (hΔ : ⊢ Δ) (hr : Ren.Wel
   | .β hlam hm => by
       simp [-Tm.subst1]
       exact DefEq.β (WfTm.rename hlam hΔ hr) (WfTm.rename hm hΔ hr)
-  | .eta ht => by
+  | .η ht => by
       have h0 : Ren.lift r 0 = 0 := by simp
       simp only [Tm.rename]
       rw [Tm.weaken_rename, h0]
-      exact DefEq.eta (WfTm.rename ht hΔ hr)
+      exact DefEq.η (WfTm.rename ht hΔ hr)
 end
 
 theorem Ren.succ_wellTyped (Γ : Ctx n) (σ : Tm n) :

@@ -51,11 +51,11 @@ theorem DefEq.subst (heq : Γ ⊢ t₁ ≡ t₂ ∶ τ) (hΔ : ⊢ Δ) (hσ : Su
   | .β (τ := τ) hlam hm => by
       simp [-Tm.subst1]
       exact DefEq.β (WfTm.subst hlam hΔ hσ) (WfTm.subst hm hΔ hσ)
-  | .eta ht => by
+  | .η ht => by
       have h0 : Subst.lift σ 0 = Tm.var 0 := by simp [Subst.lift]
       simp only [Tm.subst]
       rw [Tm.weaken_subst, h0]
-      exact DefEq.eta (WfTm.subst ht hΔ hσ)
+      exact DefEq.η (WfTm.subst ht hΔ hσ)
 end
 
 theorem Subst.WellTyped.single (hΓ : ⊢ Γ) (hu : Γ ⊢ u ∶ τ) :
