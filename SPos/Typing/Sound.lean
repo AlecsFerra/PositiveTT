@@ -1,4 +1,5 @@
-import SPos.Typing.WellTyped
+import SPos.Typing.Typing
+import SPos.Typing.TypingProperties
 import SPos.Syntax.SyntaxProperties
 import SPos.Semantics.EvalProperties
 import SPos.Semantics.Decode
@@ -29,20 +30,11 @@ theorem Models.symm {ρ ρ' : DEnv n} (hρ : ρ ∼ ρ' ⊨ Γ) : ρ' ∼ ρ ⊨
   obtain ⟨ℓ, X, hX, hmem⟩ := hρ hlook
   exact ⟨ℓ, X, hX.symm, X.symm hmem⟩
 
-inductive Lookup.ConsInv (Γ : Ctx n) (τ : Tm n) (i : Fin (n + 1)) (σ : Tm (n + 1)) : Prop where
-| here (hi : i = 0) (hσ : σ = τ.weaken)
-| there (j : Fin n) (τ' : Tm n) (hi : i = j.succ) (hσ : σ = τ'.weaken) (hj : Γ ∋ j ∶ τ')
-
-private theorem Lookup.cons_inv (h : Δ ∋ i ∶ σ) (hΔ : Δ = Γ ∷ τ) : Lookup.ConsInv Γ τ i σ := by
-  cases h with
-  | here    => obtain ⟨rfl, rfl⟩ := Env.cons_inj hΔ; exact .here rfl rfl
-  | there hj => obtain ⟨rfl, rfl⟩ := Env.cons_inj hΔ; exact .there _ _ rfl rfl hj
-
 -- Extending related environments by values related in the pushed type.
 theorem Models.cons {ρ ρ' : DEnv n} (hρ : ρ ∼ ρ' ⊨ Γ) (hA : Decode ℓ (⟦ τ ⟧𝒄 ρ) (⟦ τ ⟧𝒄 ρ') A)
     (hd : d ~ d' ∈ₚ A) : (ρ ∷ d) ∼ (ρ' ∷ d') ⊨ (Γ ∷ τ) := by
   intro i σ hlook
-  rcases hlook.cons_inv rfl with ⟨rfl, rfl⟩ | ⟨j, τ', rfl, rfl, hj⟩
+  rcases hlook.inv rfl with ⟨rfl, rfl⟩ | ⟨j, τ', rfl, rfl, hj⟩
   · exact ⟨ℓ, A, by simpa only [Tm.eval_weaken] using hA, by simpa using hd⟩
   · obtain ⟨k, X, hX, hmem⟩ := hρ hj
     exact ⟨k, X, by simpa only [Tm.eval_weaken] using hX, by simpa using hmem⟩
@@ -265,19 +257,3 @@ theorem WfTm.sound_el {ρ ρ' : DEnv n}
   obtain ⟨-, -, rfl⟩ := decode_univ_inv hk'
   obtain rfl := hk.det (Decode.el hmem')
   exact hmem
-
--- SCRATCH TEST: semantic core of eta soundness, to be wired in properly after this compiles.
-theorem eta_sound {ρ ρ' : DEnv n} (ht : Γ ⊢ t ∶ Tm.pi τ υ) (hρ : ρ ∼ ρ' ⊨ Γ) :
-    ∃ (ℓ : Nat) (X : PER D), Decode ℓ (⟦ Tm.pi τ υ ⟧𝒄 ρ) (⟦ Tm.pi τ υ ⟧𝒄 ρ') X ∧
-      (⟦ t ⟧𝒄 ρ ~
-        ⟦ Tm.lam τ (Tm.app t.weaken (Tm.var (0 : Fin (n + 1)))) ⟧𝒄 ρ' ∈ₚ X) := by
-  obtain ⟨ℓ, X, hX, hf⟩ := WfTm.sound ht hρ
-  simp only [Tm.eval, mk_lam_apply] at hX
-  obtain ⟨a', f', A, B, hc', hA, hB, rfl⟩ := decode_pi_inv hX
-  obtain ⟨rfl, rfl⟩ := mkPi_inj hc'
-  refine ⟨ℓ, PER.pi A B, by simpa [Tm.eval] using Decode.pi hA hB, ?_⟩
-  simp only [Tm.eval, mk_lam_apply]
-  intro x y hxy
-  have : ⟦ Tm.app t.weaken (Tm.var (0 : Fin (n + 1))) ⟧𝒄 (ρ' ∷ x) = ⟦ t ⟧𝒄 ρ' •𝒄 x := by
-    simp [Tm.eval]
-  simpa [ScottDomain.lam.ret_inj, this] using hf x y hxy
