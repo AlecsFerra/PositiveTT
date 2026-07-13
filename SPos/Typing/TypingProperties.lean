@@ -1,4 +1,5 @@
 import SPos.Typing.Typing
+import SPos.Syntax.SyntaxProperties
 
 inductive Lookup.Inv (Γ : Ctx n) (τ : Tm n) (i : Fin (n + 1)) (σ : Tm (n + 1)) : Prop where
 | here (hi : i = 0) (hσ : σ = τ.weaken)

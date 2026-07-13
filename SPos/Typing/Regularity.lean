@@ -2,7 +2,8 @@ import SPos.Typing.Substitution
 
 theorem WfTm.wfCtx (ht : Γ ⊢ t ∶ τ) : ⊢ Γ :=
   match ht with
-  | .conv ht _ _ | .pi ht _ | .lam ht _ _ | .app ht _ => ht.wfCtx
+  | .conv ht _ _ | .pi ht _ | .lam ht _ _ | .app ht _
+  | .id ht _ _ | .refl ht | .j ht _ _ _ _ _ _ => ht.wfCtx
   | .var hΓ _ | .u hΓ => hΓ
 
 
@@ -17,7 +18,8 @@ theorem WfCtx.lookup_wf (hΓ : ⊢ Γ) (hlook : Γ ∋ x ∶ τ) : ∃ ℓ, Γ �
 
 theorem WfTm.pi_inv {t : Tm n} (ht : Γ ⊢ t ∶ υ)  (heq : t = Π τ σ)
   : ∃ ℓ₁ ℓ₂, (Γ ⊢ τ ∶ 𝓤 ℓ₁) ∧ (Γ ∷ τ ⊢ σ ∶ 𝓤 ℓ₂) := match ht with
-  | .var _ _ | .lam _ _ _ | .app _ _ | .u _ => by cases heq
+  | .var _ _ | .lam _ _ _ | .app _ _ | .u _
+  | .id _ _ _ | .refl _ | .j _ _ _ _ _ _ _ => by cases heq
   | .conv ht _ _ => ht.pi_inv heq
   | .pi hτ hσ => by cases heq; exact ⟨_, _, hτ, hσ⟩
 
@@ -31,4 +33,9 @@ theorem WfTm.regular {Γ : Ctx n} {t τ : Tm n} (ht : Γ ⊢ t ∶ τ) : ∃ ℓ
       obtain ⟨_, hPi⟩ := ht.regular
       obtain ⟨_, ℓ₂, _, hσcod⟩ := hPi.pi_inv rfl
       exact ⟨ℓ₂, hσcod.subst1 hm ht.wfCtx⟩
+  | .id hτ _ _ => ⟨_, .u hτ.wfCtx⟩
+  | .refl ha => by
+      obtain ⟨_, hτ⟩ := ha.regular
+      exact ⟨_, .id hτ ha ha⟩
+  | .j _ _ _ _ _ hCbp _ => ⟨_, hCbp⟩
   | .u hΓ => ⟨_, .u hΓ⟩

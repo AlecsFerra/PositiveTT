@@ -11,6 +11,8 @@ inductive DecodeAux (k : Nat) (U' : ∀ ℓ, ℓ < k → PER D) : D → D → PE
 | pi : DecodeAux k U' a a' A →
         (∀ {d d' : D}, (d ~ d' ∈ₚ A) → DecodeAux k U' (f d) (f' d') (B d)) →
         DecodeAux k U' (Π̂ a f) (Π̂ a' f') (PER.pi A B)
+| id : DecodeAux k U' t t' A → (a ~ a' ∈ₚ A) → (b ~ b' ∈ₚ A) →
+        DecodeAux k U' (Îd t a b) (Îd t' a' b') (PER.id A a b)
 
 -- Forded Decode
 inductive DecodeAux.Inv (k : Nat) (U' : ∀ ℓ, ℓ < k → PER D) (c c' : D) (X : PER D) : Prop where
@@ -21,28 +23,41 @@ inductive DecodeAux.Inv (k : Nat) (U' : ∀ ℓ, ℓ < k → PER D) (c c' : D) (
     (_ : DecodeAux k U' a a' A)
     (_ : ∀ {d d' : D}, (d ~ d' ∈ₚ A) → DecodeAux k U' (f d) (f' d') (B d))
     (_ : X = PER.pi A B)
+| id
+    (_ : c = Îd t a b) (_ : c' = Îd t' a' b')
+    (_ : DecodeAux k U' t t' A)
+    (_ : a ~ a' ∈ₚ A) (_ : b ~ b' ∈ₚ A)
+    (_ : X = PER.id A a b)
 
 theorem DecodeAux.inv {X : PER D} (h : DecodeAux k U' c c' X)
   : DecodeAux.Inv k U' c c' X := by cases h with
-  | univ hℓ  => apply DecodeAux.Inv.univ <;> (try assumption) <;> simp
-  | pi hA hB => apply DecodeAux.Inv.pi   <;> (try assumption) <;> simp
+  | univ hℓ     => apply DecodeAux.Inv.univ <;> (try assumption) <;> simp
+  | pi hA hB    => apply DecodeAux.Inv.pi   <;> (try assumption) <;> simp
+  | id hA ha hb => exact DecodeAux.Inv.id rfl rfl hA ha hb rfl
 
 private theorem DecodeAux.det {U₁ : ∀ ℓ, ℓ < ℓ₁ → PER D} {U₂ : ∀ ℓ, ℓ < ℓ₂ → PER D}
   (_ : ∀ ℓ (hk₁ : ℓ < ℓ₁) (hk₂ : ℓ < ℓ₂), U₁ ℓ hk₁ = U₂ ℓ hk₂)
   (h₁ : DecodeAux ℓ₁ U₁ c c₁ X) (h₂ : DecodeAux ℓ₂ U₂ c c₂ Y)
   : X = Y := by induction h₁ generalizing c₂ Y with
   | univ =>
-    rcases h₂.inv with ⟨_, hc⟩ | hc
+    rcases h₂.inv with ⟨_, hc⟩ | hc | hc
     · obtain rfl := mkU_inj hc; simp_all
     · apply absurd hc; apply mkU_ne_mkPi
+    · apply absurd hc; apply mkU_ne_mkId
   | pi _ _ ihA ihB =>
-    rcases h₂.inv with ⟨_, hc⟩ | ⟨hc, -, hA1, hB1, rfl⟩
+    rcases h₂.inv with ⟨_, hc⟩ | ⟨hc, -, hA1, hB1, rfl⟩ | ⟨hc, -, -, -, -, -⟩
     · apply absurd hc.symm; apply mkU_ne_mkPi
     · rcases mkPi_inj hc with ⟨rfl, rfl⟩; rcases ihA hA1
       apply PER.ext; funext; apply propext
       constructor
       · intro hg _ _ hxy; rw [← ihB hxy (hB1 hxy)]; apply hg; assumption
       · intro hg _ _ hxy; rw [  ihB hxy (hB1 hxy)]; apply hg; assumption
+    · exact absurd hc (mkPi_ne_mkId _ _ _ _ _)
+  | id hsub ha hb ihsub =>
+    rcases h₂.inv with ⟨_, hc⟩ | ⟨hc, -, -, -, -⟩ | ⟨hc, -, hsub2, -, -, rfl⟩
+    · exact absurd hc.symm (mkU_ne_mkId _ _ _ _)
+    · exact absurd hc.symm (mkPi_ne_mkId _ _ _ _ _)
+    · rcases mkId_inj hc with ⟨rfl, rfl, rfl⟩; rcases ihsub hsub2; rfl
 
 
 private theorem DecodeAux.symm {X : PER D}
@@ -54,23 +69,35 @@ private theorem DecodeAux.symm {X : PER D}
     intro _ _ hd
     rw [PERResp.eq_of_rel _ hd]
     exact ihB (PER.symm _ hd)
+  | id _ ha hb ihsub =>
+    rw [PER.id_congr ha hb]
+    exact DecodeAux.id ihsub (PER.symm _ ha) (PER.symm _ hb)
 
 private theorem DecodeAux.trans {X : PER D} {Y : PER D}
   (h₁ : DecodeAux k U' c c' X) (h₂ : DecodeAux k U' c' c'' Y)
   : DecodeAux k U' c c'' X := by
   induction h₁ generalizing c'' Y with
   | univ hℓ =>
-    rcases h₂.inv with ⟨-, hc, rfl, rfl⟩ | ⟨hc, -, -, -, -⟩
+    rcases h₂.inv with ⟨-, hc, rfl, rfl⟩ | ⟨hc, -, -, -, -⟩ | ⟨hc, -, -, -, -, -⟩
     · obtain rfl := mkU_inj hc
       exact .univ hℓ
     · exact absurd hc (mkU_ne_mkPi _ _ _)
+    · exact absurd hc (mkU_ne_mkId _ _ _ _)
   | pi hA hB ihA ihB =>
-    rcases h₂.inv with ⟨_, hc, _, _⟩ | ⟨hc, rfl, hA1, hB1, rfl⟩
+    rcases h₂.inv with ⟨_, hc, _, _⟩ | ⟨hc, rfl, hA1, hB1, rfl⟩ | ⟨hc, -, -, -, -, -⟩
     · exact absurd hc.symm (mkU_ne_mkPi _ _ _)
     · rcases mkPi_inj hc with ⟨rfl, rfl⟩
       obtain rfl := DecodeAux.det (by simp) hA.symm hA1
       refine .pi (ihA hA1) ?_
       intro _ _ hdd; exact ihB (PER.refl_left _ hdd) (hB1 hdd)
+    · exact absurd hc (mkPi_ne_mkId _ _ _ _ _)
+  | id hsub ha hb ihsub =>
+    rcases h₂.inv with ⟨_, hc, _, _⟩ | ⟨hc, -, -, -, -⟩ | ⟨hc, rfl, hsub2, ha2, hb2, rfl⟩
+    · exact absurd hc.symm (mkU_ne_mkId _ _ _ _)
+    · exact absurd hc.symm (mkPi_ne_mkId _ _ _ _ _)
+    · rcases mkId_inj hc with ⟨rfl, rfl, rfl⟩
+      obtain rfl := DecodeAux.det (by simp) hsub.symm hsub2
+      exact DecodeAux.id (ihsub hsub2) (PER.trans _ ha ha2) (PER.trans _ hb hb2)
 
 
 def U (k : Nat) : PER D where
@@ -111,32 +138,43 @@ theorem Decode.pi {A : PER D}
     Decode k (Π̂ a f) (Π̂ a' f') (PER.pi A B) := by
   simp; exact .pi  hA (fun hdd' => hB hdd')
 
+theorem Decode.id {A : PER D} (hA : Decode k t t' A) (ha : a ~ a' ∈ₚ A) (hb : b ~ b' ∈ₚ A) :
+    Decode k (Îd t a b) (Îd t' a' b') (PER.id A a b) := by
+  simp; exact .id hA ha hb
+
 theorem Decode.cumul {X : PER D} (h : Decode k c c' X) (hk : k ≤ k')
   : Decode k' c c' X := by simp; induction h with
   | univ hℓ => exact .univ (hℓ.trans_le hk)
   | pi hA hB ihA ihB => exact .pi ihA fun hdd' => ihB hdd'
+  | id _ ha hb ihsub => exact .id ihsub ha hb
 inductive Decode.Inv (k : Nat) (c c' : D) (X : PER D) : Prop where
 | univ (hℓ : ℓ < k) (hc : c = mkU ℓ) (hc' : c' = mkU ℓ) (hX : X = U ℓ)
 | pi (hc : c = Π̂ a f) (hc' : c' = Π̂ a' f')
     (dom : Decode k a a' A)
     (cod : ∀ {d d' : D}, (d ~ d' ∈ₚ A) → Decode k (f d) (f' d') (B d))
     (hX : X = PER.pi A B)
+| id (hc : c = Îd t a b) (hc' : c' = Îd t' a' b')
+    (dom : Decode k t t' A)
+    (ea : a ~ a' ∈ₚ A) (eb : b ~ b' ∈ₚ A)
+    (hX : X = PER.id A a b)
 
 theorem Decode.inv {k : Nat} {c c' : D} {X : PER D}
     (h : Decode k c c' X) : Decode.Inv k c c' X := by
   simp at *
-  rcases h.inv with ⟨hℓ, hc, hc', rfl⟩ | ⟨hc, hc', hA, hB, rfl⟩
+  rcases h.inv with ⟨hℓ, hc, hc', rfl⟩ | ⟨hc, hc', hA, hB, rfl⟩ | ⟨hc, hc', hsub, ha, hb, rfl⟩
   · constructor <;> (try assumption); simp
   · exact .pi hc hc' hA (fun hdd' => hB hdd') rfl
+  · exact .id hc hc' hsub ha hb rfl
 
 inductive Decode.UnivInv (k ℓ : Nat) (c' : D) (X : PER D) : Prop where
 | mk (lt : ℓ < k) (code : c' = mkU ℓ) (per : X = U ℓ)
 
 theorem decode_univ_inv {k ℓ : Nat} {c' : D} {X : PER D}
     (h : Decode k (mkU ℓ : D) c' X) : Decode.UnivInv k ℓ c' X := by
-  rcases h.inv with ⟨hℓ, hc, rfl, rfl⟩ | ⟨hc, -, -, -, -⟩
+  rcases h.inv with ⟨hℓ, hc, rfl, rfl⟩ | ⟨hc, -, -, -, -⟩ | ⟨hc, -, -, -, -, -⟩
   · obtain rfl := mkU_inj hc; constructor <;> (try assumption); simp
   · exact absurd hc (mkU_ne_mkPi _ _ _)
+  · exact absurd hc (mkU_ne_mkId _ _ _ _)
 
 inductive Decode.PiInv (k : Nat) (a : D) (f : D →𝒄 D) (c' : D) (X : PER D) : Prop where
 | mk (a' : D) (f' : D →𝒄 D) (A : PER D) (B : A →ₚ PER.diag (PER D))
@@ -147,10 +185,26 @@ inductive Decode.PiInv (k : Nat) (a : D) (f : D →𝒄 D) (c' : D) (X : PER D) 
 
 theorem decode_pi_inv {k : Nat} {a : D} {f : D →𝒄 D} {c' : D} {X : PER D}
     (h : Decode k (Π̂ a f) c' X) : Decode.PiInv k a f c' X := by
-  rcases h.inv with ⟨-, hc, -, -⟩ | ⟨hc, rfl, hA, hB, rfl⟩
+  rcases h.inv with ⟨-, hc, -, -⟩ | ⟨hc, rfl, hA, hB, rfl⟩ | ⟨hc, -, -, -, -, -⟩
   · exact absurd hc.symm (mkU_ne_mkPi _ _ _)
   · obtain ⟨rfl, rfl⟩ := mkPi_inj hc
     constructor <;> (try assumption); rfl; simp
+  · exact absurd hc (mkPi_ne_mkId _ _ _ _ _)
+
+inductive Decode.IdInv (k : Nat) (t a b : D) (c' : D) (X : PER D) : Prop where
+| mk (t' a' b' : D) (A : PER D)
+    (code : c' = Îd t' a' b')
+    (dom : Decode k t t' A)
+    (ea : a ~ a' ∈ₚ A) (eb : b ~ b' ∈ₚ A)
+    (per : X = PER.id A a b)
+
+theorem decode_id_inv {k : Nat} {t a b : D} {c' : D} {X : PER D}
+    (h : Decode k (Îd t a b) c' X) : Decode.IdInv k t a b c' X := by
+  rcases h.inv with ⟨-, hc, -, -⟩ | ⟨hc, -, -, -, -⟩ | ⟨hc, hc', hsub, ha, hb, rfl⟩
+  · exact absurd hc.symm (mkU_ne_mkId _ _ _ _)
+  · exact absurd hc.symm (mkPi_ne_mkId _ _ _ _ _)
+  · obtain ⟨rfl, rfl, rfl⟩ := mkId_inj hc
+    exact ⟨_, _, _, _, hc', hsub, ha, hb, rfl⟩
 
 def El (ℓ : Nat) (c : D) : PER D where
   rel x y := ∃ X : PER D, Decode ℓ c c X ∧ (x ~ y ∈ₚ X)

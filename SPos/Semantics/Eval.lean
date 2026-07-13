@@ -21,6 +21,9 @@ def Tm.eval : Tm n → (DEnv n) →𝒄 D
 | .pi τ υ  => ƛ[ by fun_prop ] ρ ↦ Π̂ (⟦ τ ⟧𝒄 ρ) (ƛ[ by fun_prop ] d ↦ ⟦ υ ⟧𝒄 (ρ ∷ d))
 | .lam _ t => ƛ[ by fun_prop ] ρ ↦ inj→ (ƛ[ by fun_prop ] d ↦ ⟦ t ⟧𝒄 (ρ ∷ d))
 | .app t s => ƛ[ by fun_prop ] ρ ↦ ⟦ t ⟧𝒄 ρ •𝒄 ⟦ s ⟧𝒄 ρ
+| .id τ a b => ƛ[ by fun_prop ] ρ ↦ Îd (⟦ τ ⟧𝒄 ρ) (⟦ a ⟧𝒄 ρ) (⟦ b ⟧𝒄 ρ)
+| .refl _ _ => ƛ[ by fun_prop ] _ ↦ mkRefl
+| .j _ d _ => ⟦ d ⟧𝒄
 | .u ℓ     => ƛ[ by fun_prop ] ρ ↦ Û ℓ
 end
 

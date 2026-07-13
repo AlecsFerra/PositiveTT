@@ -15,6 +15,11 @@ theorem Ren.WellTyped.lift {r : Ren n m} (hr : Ren.WellTyped r Γ Δ) {τ : Tm n
     rw [h, Tm.weaken_rename]
     exact Lookup.there (hr hj)
 
+theorem Ren.WellTyped.lift2 {r : Ren n m} (hr : Ren.WellTyped r Γ Δ) {τ : Tm n} {υ : Tm (n + 1)} :
+    Ren.WellTyped (Ren.lift (Ren.lift r)) (Γ ∷ τ ∷ υ)
+      (Δ ∷ τ.rename r ∷ υ.rename (Ren.lift r)) :=
+  Ren.WellTyped.lift (Ren.WellTyped.lift hr)
+
 mutual
 theorem WfTm.rename (ht : Γ ⊢ t ∶ τ) (hΔ : ⊢ Δ) (hr : Ren.WellTyped r Γ Δ)
   : (Δ ⊢ t.rename r ∶ τ.rename r) := match ht with
@@ -27,7 +32,26 @@ theorem WfTm.rename (ht : Γ ⊢ t ∶ τ) (hΔ : ⊢ Δ) (hr : Ren.WellTyped r 
   | .app ht hs => by
       simp
       exact WfTm.app (WfTm.rename ht hΔ hr) (WfTm.rename hs hΔ hr)
+  | .id hτ ha hb =>
+      .id (WfTm.rename hτ hΔ hr) (WfTm.rename ha hΔ hr) (WfTm.rename hb hΔ hr)
+  | .refl ha => .refl (WfTm.rename ha hΔ hr)
+  | .j (τ := τ) (a := a) hτ ha hIdT hC hp hCbp hd => by
+      have hEq : (Tm.id (Tm.weaken τ) (Tm.weaken a) (# 0)).rename r.lift
+          = Tm.id (Tm.weaken (τ.rename r)) (Tm.weaken (a.rename r)) (# 0) := by
+        simp [Tm.weaken_rename]
+      have hτ' := WfTm.rename hτ hΔ hr
+      have hΔτ := hΔ.cons hτ'
+      have hIdT' := WfTm.rename hIdT hΔτ hr.lift
+      have hC' := WfTm.rename hC (hΔτ.cons hIdT') hr.lift2
+      have hCbp' := WfTm.rename hCbp hΔ hr
+      have hd' := WfTm.rename hd hΔ hr
+      rw [hEq] at hIdT' hC'
+      simp only [Tm.subst1_rename, Tm.weaken_rename, Tm.rename_refl] at hd'
+      simp only [Tm.subst1_rename, Tm.weaken_rename] at hCbp'
+      simp only [Tm.rename_j, Tm.subst1_rename, Tm.weaken_rename]
+      exact WfTm.j hτ' (WfTm.rename ha hΔ hr) hIdT' hC' (WfTm.rename hp hΔ hr) hCbp' hd'
   | .u hΓ => .u hΔ
+
 theorem DefEq.rename (heq : Γ ⊢ t ≡ t' ∶ τ) (hΔ : ⊢ Δ) (hr : Ren.WellTyped r Γ Δ)
   : (Δ ⊢ t.rename r ≡ t'.rename r ∶ τ.rename r) := match heq with
   | .refl ht => .refl (WfTm.rename ht hΔ hr)
@@ -41,14 +65,47 @@ theorem DefEq.rename (heq : Γ ⊢ t ≡ t' ∶ τ) (hΔ : ⊢ Δ) (hr : Ren.Wel
   | .app ht hmwf hm => by
       simp
       exact DefEq.app (DefEq.rename ht hΔ hr) (WfTm.rename hmwf hΔ hr) (DefEq.rename hm hΔ hr)
-  | .β hlam hm => by
+  | .lamβ hlam hm => by
       simp
-      exact DefEq.β (WfTm.rename hlam hΔ hr) (WfTm.rename hm hΔ hr)
-  | .η ht => by
+      exact DefEq.lamβ (WfTm.rename hlam hΔ hr) (WfTm.rename hm hΔ hr)
+  | .lamη ht => by
       have h0 : Ren.lift r 0 = 0 := by simp [Ren.lift]
       simp [Tm.rename]
       rw [h0]
-      exact DefEq.η (WfTm.rename ht hΔ hr)
+      exact DefEq.lamη (WfTm.rename ht hΔ hr)
+  | .id hτ ha hb hτeq haeq hbeq =>
+      .id (WfTm.rename hτ hΔ hr) (WfTm.rename ha hΔ hr) (WfTm.rename hb hΔ hr)
+        (DefEq.rename hτeq hΔ hr) (DefEq.rename haeq hΔ hr) (DefEq.rename hbeq hΔ hr)
+  | .reflId ha haeq => .reflId (WfTm.rename ha hΔ hr) (DefEq.rename haeq hΔ hr)
+  | .j (τ := τ) (a := a) hτ ha hIdT hC hd hp hCeq hdeq hpeq => by
+      have hEq : (Tm.id (Tm.weaken τ) (Tm.weaken a) (# 0)).rename r.lift
+          = Tm.id (Tm.weaken (τ.rename r)) (Tm.weaken (a.rename r)) (# 0) := by
+        simp [Tm.weaken_rename]
+      have hτ' := WfTm.rename hτ hΔ hr
+      have hΔτ := hΔ.cons hτ'
+      have hIdT' := WfTm.rename hIdT hΔτ hr.lift
+      have hC' := WfTm.rename hC (hΔτ.cons hIdT') hr.lift2
+      have hCeq' := DefEq.rename hCeq (hΔτ.cons hIdT') hr.lift2
+      have hd' := WfTm.rename hd hΔ hr
+      have hdeq' := DefEq.rename hdeq hΔ hr
+      rw [hEq] at hIdT' hC' hCeq'
+      simp only [Tm.subst1_rename, Tm.weaken_rename, Tm.rename_refl] at hd' hdeq'
+      simp only [Tm.rename_j, Tm.subst1_rename, Tm.weaken_rename]
+      exact DefEq.j hτ' (WfTm.rename ha hΔ hr) hIdT' hC' hd' (WfTm.rename hp hΔ hr)
+        hCeq' hdeq' (DefEq.rename hpeq hΔ hr)
+  | .jβ (τ := τ) (a := a) hτ ha hIdT hC hd => by
+      have hEq : (Tm.id (Tm.weaken τ) (Tm.weaken a) (# 0)).rename r.lift
+          = Tm.id (Tm.weaken (τ.rename r)) (Tm.weaken (a.rename r)) (# 0) := by
+        simp [Tm.weaken_rename]
+      have hτ' := WfTm.rename hτ hΔ hr
+      have hΔτ := hΔ.cons hτ'
+      have hIdT' := WfTm.rename hIdT hΔτ hr.lift
+      have hC' := WfTm.rename hC (hΔτ.cons hIdT') hr.lift2
+      have hd' := WfTm.rename hd hΔ hr
+      rw [hEq] at hIdT' hC'
+      simp only [Tm.subst1_rename, Tm.weaken_rename, Tm.rename_refl] at hd' ⊢
+      simp only [Tm.rename_j, Tm.rename_refl]
+      exact DefEq.jβ hτ' (WfTm.rename ha hΔ hr) hIdT' hC' hd'
 end
 
 theorem Ren.succ_wellTyped (Γ : Ctx n) (σ : Tm n) :
