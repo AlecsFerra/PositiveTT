@@ -59,12 +59,12 @@ theorem WfTm.sound {Γ : Ctx n} {t τ : Tm n} (ht : Γ ⊢ t ∶ τ) {ρ ρ' : D
     obtain ⟨X, hX⟩ := mem_U.mp hUτ
     rw [El_eq_of_decode hX] at hElt
     obtain ⟨_, _, _, hY, hcross⟩ := DefEq.sound hτσ hρ
-    simp only [Tm.eval, mk_lam_apply] at hY
+    simp [Tm.eval, mk_lam_apply] at hY
     obtain ⟨-, -, rfl⟩ := decode_univ_inv hY
     obtain ⟨Z, hZ⟩ := mem_U.mp hcross
     obtain rfl := hX.det hZ
     obtain ⟨_, _, _, hY', hself⟩ := DefEq.sound hτσ hρ.refl_left
-    simp only [Tm.eval, mk_lam_apply] at hY'
+    simp [Tm.eval, mk_lam_apply] at hY'
     obtain ⟨-, -, rfl⟩ := decode_univ_inv hY'
     obtain ⟨W, hW⟩ := mem_U.mp hself
     obtain rfl := hX.det hW
@@ -75,14 +75,14 @@ theorem WfTm.sound {Γ : Ctx n} {t τ : Tm n} (ht : Γ ⊢ t ∶ τ) {ρ ρ' : D
       mem_U.mpr ⟨U ℓ, by simpa [Tm.eval] using Decode.univ (D := D) (ℓ := ℓ) (k := ℓ + 1) (by omega)⟩⟩
   | .pi (τ := τ) (υ := υ) (ℓ₁ := ℓ₁) (ℓ₂ := ℓ₂) hτ hυ => by
     obtain ⟨_, _, _, hk, hmemτ⟩ := WfTm.sound hτ hρ
-    simp only [Tm.eval, mk_lam_apply] at hk
+    simp [Tm.eval, mk_lam_apply] at hk
     obtain ⟨-, -, rfl⟩ := decode_univ_inv hk
     obtain ⟨A, hA⟩ := mem_U.mp hmemτ
     have hB : ∀ {d d' : D}, (d ~ d' ∈ₚ A) →
         Decode ℓ₂ (⟦ υ ⟧𝒄 (ρ ∷ d)) (⟦ υ ⟧𝒄 (ρ' ∷ d')) (El ℓ₂ (⟦ υ ⟧𝒄 (ρ ∷ d))) := by
       intro d d' hdd'
       obtain ⟨_, _, _, hk', hmemυ⟩ := WfTm.sound hυ (hρ.cons hA hdd')
-      simp only [Tm.eval, mk_lam_apply] at hk'
+      simp [Tm.eval, mk_lam_apply] at hk'
       obtain ⟨-, -, rfl⟩ := decode_univ_inv hk'
       exact Decode.el hmemυ
     have hcoh : ∀ (d d' : D), (d ~ d' ∈ₚ A) →
@@ -90,7 +90,7 @@ theorem WfTm.sound {Γ : Ctx n} {t τ : Tm n} (ht : Γ ⊢ t ∶ τ) {ρ ρ' : D
       intro d d' hdd'
       obtain ⟨_, _, _, hk', hmemυ⟩ :=
         WfTm.sound hυ (Models.cons hρ.refl_left hA.refl_left hdd')
-      simp only [Tm.eval, mk_lam_apply] at hk'
+      simp [Tm.eval, mk_lam_apply] at hk'
       obtain ⟨-, -, rfl⟩ := decode_univ_inv hk'
       obtain ⟨Y, hY⟩ := mem_U.mp hmemυ
       rw [El_eq_of_decode hY, El_eq_of_decode hY.symm]
@@ -105,14 +105,14 @@ theorem WfTm.sound {Γ : Ctx n} {t τ : Tm n} (ht : Γ ⊢ t ∶ τ) {ρ ρ' : D
       by simpa [Tm.eval] using hu, mem_U.mpr ⟨_, by simpa [Tm.eval] using hpi⟩⟩
   | .lam (σ := σ) (ℓ := ℓ₁) (ℓ' := ℓ₂) hτ hσ ht => by
     obtain ⟨_, _, _, hk, hmemτ⟩ := WfTm.sound hτ hρ
-    simp only [Tm.eval, mk_lam_apply] at hk
+    simp [Tm.eval, mk_lam_apply] at hk
     obtain ⟨-, -, rfl⟩ := decode_univ_inv hk
     obtain ⟨A, hA⟩ := mem_U.mp hmemτ
     have hB : ∀ {d d' : D}, (d ~ d' ∈ₚ A) →
         Decode ℓ₂ (⟦ σ ⟧𝒄 (ρ ∷ d)) (⟦ σ ⟧𝒄 (ρ' ∷ d')) (El ℓ₂ (⟦ σ ⟧𝒄 (ρ ∷ d))) := by
       intro d d' hdd'
       obtain ⟨_, _, _, hk', hmemσ⟩ := WfTm.sound hσ (hρ.cons hA hdd')
-      simp only [Tm.eval, mk_lam_apply] at hk'
+      simp [Tm.eval, mk_lam_apply] at hk'
       obtain ⟨-, -, rfl⟩ := decode_univ_inv hk'
       exact Decode.el hmemσ
     have hcoh : ∀ (d d' : D), (d ~ d' ∈ₚ A) →
@@ -120,7 +120,7 @@ theorem WfTm.sound {Γ : Ctx n} {t τ : Tm n} (ht : Γ ⊢ t ∶ τ) {ρ ρ' : D
       intro d d' hdd'
       obtain ⟨_, _, _, hk', hmemσ⟩ :=
         WfTm.sound hσ (Models.cons hρ.refl_left hA.refl_left hdd')
-      simp only [Tm.eval, mk_lam_apply] at hk'
+      simp [Tm.eval, mk_lam_apply] at hk'
       obtain ⟨-, -, rfl⟩ := decode_univ_inv hk'
       obtain ⟨Y, hY⟩ := mem_U.mp hmemσ
       rw [El_eq_of_decode hY, El_eq_of_decode hY.symm]
@@ -139,13 +139,13 @@ theorem WfTm.sound {Γ : Ctx n} {t τ : Tm n} (ht : Γ ⊢ t ∶ τ) {ρ ρ' : D
     obtain ⟨k, hU, hElt⟩ := WfTm.sound ht hρ
     obtain ⟨X, hk⟩ := mem_U.mp hU
     rw [El_eq_of_decode hk] at hElt
-    simp only [Tm.eval, mk_lam_apply] at hk
+    simp [Tm.eval, mk_lam_apply] at hk
     obtain ⟨a', f', A, B, hc', hA, hB, rfl⟩ := decode_pi_inv hk
     obtain ⟨rfl, rfl⟩ := mkPi_inj hc'
     obtain ⟨_, _, _, hk', hmems⟩ := WfTm.sound hs hρ
     obtain rfl := hk'.det hA
     have hd : Decode k (⟦ σ [/ s ] ⟧𝒄 ρ) (⟦ σ [/ s ] ⟧𝒄 ρ') (B (⟦ s ⟧𝒄 ρ)) := by
-      simpa only [Tm.eval_subst1, mk_lam_apply] using hB hmems
+      simpa [Tm.eval_subst1, mk_lam_apply] using hB hmems
     exact ⟨_, mem_U.mpr ⟨_, hd⟩, _, hd.refl_left, by simpa [Tm.eval] using hElt _ _ hmems⟩
 
 theorem DefEq.sound {Γ : Ctx n} {t t' τ : Tm n} (ht : Γ ⊢ t ≡ t' ∶ τ) {ρ ρ' : DEnv n}
@@ -167,11 +167,11 @@ theorem DefEq.sound {Γ : Ctx n} {t t' τ : Tm n} (ht : Γ ⊢ t ≡ t' ∶ τ) 
     exact ⟨_, mem_U.mpr ⟨_, hX₂⟩, _, hX₂.refl_left, X₂.trans (hXeq ▸ hrel₁) hEl₂⟩
   | .pi (τ := τ) (υ := υ) (υ' := υ') (ℓ₁ := ℓ₁) (ℓ₂ := ℓ₂) hτwf hυwf hτ hυ => by
     obtain ⟨_, _, _, hk, hmemτ⟩ := WfTm.sound hτwf hρ
-    simp only [Tm.eval, mk_lam_apply] at hk
+    simp [Tm.eval, mk_lam_apply] at hk
     obtain ⟨-, -, rfl⟩ := decode_univ_inv hk
     obtain ⟨A, hA⟩ := mem_U.mp hmemτ
     obtain ⟨_, _, _, hk₂, hrelτ⟩ := DefEq.sound hτ hρ
-    simp only [Tm.eval, mk_lam_apply] at hk₂
+    simp [Tm.eval, mk_lam_apply] at hk₂
     obtain ⟨-, -, rfl⟩ := decode_univ_inv hk₂
     obtain ⟨A', hA'⟩ := mem_U.mp hrelτ
     obtain rfl := hA.det hA'
@@ -179,7 +179,7 @@ theorem DefEq.sound {Γ : Ctx n} {t t' τ : Tm n} (ht : Γ ⊢ t ≡ t' ∶ τ) 
         Decode ℓ₂ (⟦ υ ⟧𝒄 (ρ ∷ d)) (⟦ υ' ⟧𝒄 (ρ' ∷ d')) (El ℓ₂ (⟦ υ ⟧𝒄 (ρ ∷ d))) := by
       intro d d' hdd'
       obtain ⟨_, _, _, hk', hmemυ⟩ := DefEq.sound hυ (hρ.cons hA hdd')
-      simp only [Tm.eval, mk_lam_apply] at hk'
+      simp [Tm.eval, mk_lam_apply] at hk'
       obtain ⟨-, -, rfl⟩ := decode_univ_inv hk'
       exact Decode.el hmemυ
     have hcoh : ∀ (d d' : D), (d ~ d' ∈ₚ A) →
@@ -187,7 +187,7 @@ theorem DefEq.sound {Γ : Ctx n} {t t' τ : Tm n} (ht : Γ ⊢ t ≡ t' ∶ τ) 
       intro d d' hdd'
       obtain ⟨_, _, _, hk', hmemυ⟩ :=
         WfTm.sound hυwf (Models.cons hρ.refl_left hA.refl_left hdd')
-      simp only [Tm.eval, mk_lam_apply] at hk'
+      simp [Tm.eval, mk_lam_apply] at hk'
       obtain ⟨-, -, rfl⟩ := decode_univ_inv hk'
       obtain ⟨Y, hY⟩ := mem_U.mp hmemυ
       rw [El_eq_of_decode hY, El_eq_of_decode hY.symm]
@@ -202,14 +202,14 @@ theorem DefEq.sound {Γ : Ctx n} {t t' τ : Tm n} (ht : Γ ⊢ t ≡ t' ∶ τ) 
       by simpa [Tm.eval] using hu, mem_U.mpr ⟨_, by simpa [Tm.eval] using hpi⟩⟩
   | .lam (σ := σ) (ℓ := ℓ₁) (ℓ' := ℓ₂) hτ hσ ht => by
     obtain ⟨_, _, _, hk, hmemτ⟩ := WfTm.sound hτ hρ
-    simp only [Tm.eval, mk_lam_apply] at hk
+    simp [Tm.eval, mk_lam_apply] at hk
     obtain ⟨-, -, rfl⟩ := decode_univ_inv hk
     obtain ⟨A, hA⟩ := mem_U.mp hmemτ
     have hB : ∀ {d d' : D}, (d ~ d' ∈ₚ A) →
         Decode ℓ₂ (⟦ σ ⟧𝒄 (ρ ∷ d)) (⟦ σ ⟧𝒄 (ρ' ∷ d')) (El ℓ₂ (⟦ σ ⟧𝒄 (ρ ∷ d))) := by
       intro d d' hdd'
       obtain ⟨_, _, _, hk', hmemσ⟩ := WfTm.sound hσ (hρ.cons hA hdd')
-      simp only [Tm.eval, mk_lam_apply] at hk'
+      simp [Tm.eval, mk_lam_apply] at hk'
       obtain ⟨-, -, rfl⟩ := decode_univ_inv hk'
       exact Decode.el hmemσ
     have hcoh : ∀ (d d' : D), (d ~ d' ∈ₚ A) →
@@ -217,7 +217,7 @@ theorem DefEq.sound {Γ : Ctx n} {t t' τ : Tm n} (ht : Γ ⊢ t ≡ t' ∶ τ) 
       intro d d' hdd'
       obtain ⟨_, _, _, hk', hmemσ⟩ :=
         WfTm.sound hσ (Models.cons hρ.refl_left hA.refl_left hdd')
-      simp only [Tm.eval, mk_lam_apply] at hk'
+      simp [Tm.eval, mk_lam_apply] at hk'
       obtain ⟨-, -, rfl⟩ := decode_univ_inv hk'
       obtain ⟨Y, hY⟩ := mem_U.mp hmemσ
       rw [El_eq_of_decode hY, El_eq_of_decode hY.symm]
@@ -236,7 +236,7 @@ theorem DefEq.sound {Γ : Ctx n} {t t' τ : Tm n} (ht : Γ ⊢ t ≡ t' ∶ τ) 
     obtain ⟨k, hU, hElt⟩ := DefEq.sound ht' hρ
     obtain ⟨X, hk⟩ := mem_U.mp hU
     rw [El_eq_of_decode hk] at hElt
-    simp only [Tm.eval, mk_lam_apply] at hk
+    simp [Tm.eval, mk_lam_apply] at hk
     obtain ⟨a', f', A, B, hc', hA, hB, rfl⟩ := decode_pi_inv hk
     obtain ⟨rfl, rfl⟩ := mkPi_inj hc'
     obtain ⟨_, _, _, hk', hmems⟩ := WfTm.sound hmwf hρ
@@ -244,31 +244,31 @@ theorem DefEq.sound {Γ : Ctx n} {t t' τ : Tm n} (ht : Γ ⊢ t ≡ t' ∶ τ) 
     obtain ⟨_, _, _, hk'', hmemm⟩ := DefEq.sound hm' hρ
     obtain rfl := hk''.det hA
     have hd : Decode k (⟦ σ [/ m ] ⟧𝒄 ρ) (⟦ σ [/ m ] ⟧𝒄 ρ') (B (⟦ m ⟧𝒄 ρ)) := by
-      simpa only [Tm.eval_subst1, mk_lam_apply] using hB hmems
+      simpa [Tm.eval_subst1, mk_lam_apply] using hB hmems
     exact ⟨_, mem_U.mpr ⟨_, hd⟩, _, hd.refl_left, by simpa [Tm.eval] using hElt _ _ hmemm⟩
   | .β (σ := σ) (m := m) hlam hm => by
     obtain ⟨k, hU, hElt⟩ := WfTm.sound hlam hρ
     obtain ⟨X, hk⟩ := mem_U.mp hU
     rw [El_eq_of_decode hk] at hElt
-    simp only [Tm.eval, mk_lam_apply] at hk
+    simp [Tm.eval, mk_lam_apply] at hk
     obtain ⟨a', f', A, B, hc', hA, hB, rfl⟩ := decode_pi_inv hk
     obtain ⟨rfl, rfl⟩ := mkPi_inj hc'
     obtain ⟨_, _, _, hk', hmems⟩ := WfTm.sound hm hρ
     obtain rfl := hk'.det hA
     have hd : Decode k (⟦ σ [/ m ] ⟧𝒄 ρ) (⟦ σ [/ m ] ⟧𝒄 ρ') (B (⟦ m ⟧𝒄 ρ)) := by
-      simpa only [Tm.eval_subst1, mk_lam_apply] using hB hmems
+      simpa [Tm.eval_subst1, mk_lam_apply] using hB hmems
     exact ⟨_, mem_U.mpr ⟨_, hd⟩, _, hd.refl_left,
       by simpa [Tm.eval, Tm.eval_subst1, ScottDomain.lam.ret_inj] using hElt _ _ hmems⟩
   | .η hη => by
     obtain ⟨_, hU, hElt⟩ := WfTm.sound hη hρ
     obtain ⟨X, hX⟩ := mem_U.mp hU
     rw [El_eq_of_decode hX] at hElt
-    simp only [Tm.eval, mk_lam_apply] at hX
+    simp [Tm.eval, mk_lam_apply] at hX
     obtain ⟨a', f', A, B, hc', hA, hB, rfl⟩ := decode_pi_inv hX
     obtain ⟨rfl, rfl⟩ := mkPi_inj hc'
     refine ⟨_, mem_U.mpr ⟨_, by simpa [Tm.eval] using Decode.pi hA hB⟩, _,
       by simpa [Tm.eval] using (Decode.pi hA hB).refl_left, ?_⟩
-    simp only [Tm.eval, mk_lam_apply]
+    simp [Tm.eval, mk_lam_apply]
     intro x y hxy
     have : ⟦ Tm.app t.weaken (Tm.var (0 : Fin (n + 1))) ⟧𝒄 (ρ' ∷ x) = ⟦ t ⟧𝒄 ρ' •𝒄 x := by
       simp [Tm.eval]
@@ -285,7 +285,7 @@ theorem WfTm.sound_el {ρ ρ' : DEnv n}
   obtain ⟨X, hk⟩ := mem_U.mp hU
   rw [El_eq_of_decode hk] at hEl
   obtain ⟨_, _, _, hk', hmem'⟩ := hτ.sound hρ
-  simp only [Tm.eval, mk_lam_apply] at hk'
+  simp [Tm.eval, mk_lam_apply] at hk'
   obtain ⟨-, -, rfl⟩ := decode_univ_inv hk'
   obtain rfl := hk.det (Decode.el hmem')
   exact hEl
