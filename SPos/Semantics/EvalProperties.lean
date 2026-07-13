@@ -18,7 +18,7 @@ theorem Env.get_rename (r : Ren m n) (ρ : DEnv n) (i : Fin m) :
 @[simp]
 theorem Env.rename_lift_cons (r : Ren m n) (ρ : DEnv n) (v : D) :
     (ρ ∷ v).rename r.lift = ρ.rename r ∷ v := by
-  apply Env.ext; intro i; induction i using Fin.cases <;> simp
+  apply Env.ext; intro i; induction i using Fin.cases <;> simp [Ren.lift]
 
 @[simp]
 theorem Env.rename_succ_cons (ρ : DEnv n) (v : D) :
@@ -36,7 +36,7 @@ theorem Tm.eval_rename (t : Tm n) (r : Ren n m) (ρ : DEnv m)
 /-- Weakening a term makes it ignore the newest variable. -/
 @[simp]
 theorem Tm.eval_weaken (t : Tm n) (ρ : DEnv n) (d : D) :
-    ⟦ t.weaken ⟧𝒄 (ρ ∷ d) = ⟦ t ⟧𝒄 ρ := by simp
+    ⟦ t.weaken ⟧𝒄 (ρ ∷ d) = ⟦ t ⟧𝒄 ρ := by simp [Tm.weaken]
 
 @[simp]
 def Subst.eval (σ : Subst n m) (ρ : DEnv m) : DEnv n :=
@@ -49,12 +49,12 @@ theorem Subst.get_eval (σ : Subst n m) (ρ : DEnv m) (i : Fin n) :
 @[simp]
 theorem Subst.eval_lift_cons (σ : Subst n m) (ρ : DEnv m) (d : D) :
     (σ.lift).eval (ρ ∷ d) = σ.eval ρ ∷ d := by
-  apply Env.ext; intro i; induction i using Fin.cases <;> simp [-Tm.weaken]
+  apply Env.ext; intro i; induction i using Fin.cases <;> simp
 
 @[simp]
 theorem Subst.eval_single (u : Tm n) (ρ : DEnv n) :
     (Subst.single u).eval ρ = ρ ∷ ⟦ u ⟧𝒄 ρ := by
-  apply Env.ext; intro i; induction i using Fin.cases <;> simp
+  apply Env.ext; intro i; induction i using Fin.cases <;> simp [Subst.single]
 
 @[simp]
 theorem Tm.eval_subst (t : Tm n) (σ : Subst n m) (ρ : DEnv m)
@@ -64,4 +64,4 @@ theorem Tm.eval_subst (t : Tm n) (σ : Subst n m) (ρ : DEnv m)
 
 @[simp]
 theorem Tm.eval_subst1 (t : Tm (n + 1)) (u : Tm n) (ρ : DEnv n) :
-    ⟦ t [/ u ] ⟧𝒄 ρ = ⟦ t ⟧𝒄 (ρ ∷ ⟦ u ⟧𝒄 ρ) := by simp
+    ⟦ t [/ u ] ⟧𝒄 ρ = ⟦ t ⟧𝒄 (ρ ∷ ⟦ u ⟧𝒄 ρ) := by simp [Tm.subst1]

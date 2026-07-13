@@ -169,3 +169,10 @@ theorem Decode.el {ℓ : Nat} {c c' : D} (h : c ~ c' ∈ₚ U ℓ) : Decode ℓ 
   obtain ⟨X, hX⟩ := mem_U.mp h
   rw [El_eq_of_decode hX]
   exact hX
+
+/-- `El` doesn't depend on which level witnesses a given pair's relatedness. -/
+theorem El.det {c x y : D} (h₁ : x ~ y ∈ₚ El ℓ₁ c) (h₂ : x ~ y ∈ₚ El ℓ₂ c) :
+    El ℓ₁ c = El ℓ₂ c := by
+  obtain ⟨X, hX, _⟩ := h₁
+  obtain ⟨Y, hY, _⟩ := h₂
+  rw [El_eq_of_decode hX, El_eq_of_decode hY, Decode.det hX hY]

@@ -27,8 +27,8 @@ theorem WfTm.subst (ht : Γ ⊢ t ∶ τ) (hΔ : ⊢ Δ) (hσ : Subst.WellTyped 
       let hτ' := WfTm.subst hτ hΔ hσ
       .lam hτ' (WfTm.subst hσwf (hΔ.cons hτ') (hσ.lift (hΔ.cons hτ')))
         (WfTm.subst ht (hΔ.cons hτ') (hσ.lift (hΔ.cons hτ')))
-  | .app (τ := τ) ht hs => by
-      simp [-Tm.subst1]
+  | .app ht hs => by
+      simp
       exact WfTm.app (WfTm.subst ht hΔ hσ) (WfTm.subst hs hΔ hσ)
   | .u hΓ => .u hΔ
 
@@ -45,11 +45,11 @@ theorem DefEq.subst (heq : Γ ⊢ t₁ ≡ t₂ ∶ τ) (hΔ : ⊢ Δ) (hσ : Su
       let hτ' := WfTm.subst hτ hΔ hσ
       .lam hτ' (WfTm.subst hσwf (hΔ.cons hτ') (hσ.lift (hΔ.cons hτ')))
         (DefEq.subst ht (hΔ.cons hτ') (hσ.lift (hΔ.cons hτ')))
-  | .app (τ := τ) ht hmwf hm => by
-      simp [-Tm.subst1]
+  | .app ht hmwf hm => by
+      simp
       exact DefEq.app (DefEq.subst ht hΔ hσ) (WfTm.subst hmwf hΔ hσ) (DefEq.subst hm hΔ hσ)
-  | .β (τ := τ) hlam hm => by
-      simp [-Tm.subst1]
+  | .β hlam hm => by
+      simp
       exact DefEq.β (WfTm.subst hlam hΔ hσ) (WfTm.subst hm hΔ hσ)
   | .η ht => by
       have h0 : Subst.lift σ 0 = Tm.var 0 := by simp [Subst.lift]

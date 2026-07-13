@@ -17,7 +17,6 @@ prefix:(max - 1) "𝓤" => Tm.u
 
 def Ren (n m : Nat) := Fin n → Fin m
 
-@[simp]
 def Ren.lift (ρ : Ren n m) : Ren (n + 1) (m + 1) :=
   Fin.cases 0 (fun i => (ρ i).succ)
 
@@ -29,7 +28,6 @@ def Tm.rename (ρ : Ren n m) : Tm n → Tm m
 | .app t₁ t₂ => .app (t₁.rename ρ) (t₂.rename ρ)
 | .u ℓ       => .u ℓ
 
-@[simp]
 def Tm.weaken : Tm n → Tm (n + 1) := Tm.rename Fin.succ
 prefix:(max - 1) "↑" => Tm.weaken
 
@@ -48,11 +46,9 @@ def Tm.subst (σ : Subst n m) : Tm n → Tm m
 | .app t₁ t₂ => .app (t₁.subst σ) (t₂.subst σ)
 | .u ℓ       => .u ℓ
 
-@[simp]
 def Subst.single (u : Tm n) : Subst (n + 1) n :=
   Fin.cases u Tm.var
 
-@[simp]
 def Tm.subst1 (t : Tm (n + 1)) (u : Tm n) : Tm n :=
   t.subst (Subst.single u)
 

@@ -9,7 +9,7 @@ import SPos.Semantics.ValueDomain
 import SPos.Structure.PER
 import SPos.Syntax.Syntax
 import SPos.Syntax.SyntaxProperties
--- import SPos.Typing.Regularity
+import SPos.Typing.Regularity
 import SPos.Typing.Sound
 import SPos.Typing.Substitution
 import SPos.Typing.Typing
