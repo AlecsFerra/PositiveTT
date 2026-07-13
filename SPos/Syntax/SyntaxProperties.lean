@@ -37,7 +37,7 @@ theorem Ren.lift_comp (r₁ : Ren n m) (r₂ : Ren m k) :
 @[simp]
 theorem Tm.rename_rename (t : Tm n) (r₁ : Ren n m) (r₂ : Ren m k) :
     (t.rename r₁).rename r₂ = t.rename (r₂ ∘ r₁) := by
-  induction t generalizing m k <;> simp_all
+  induction t generalizing m k <;> simp_all [Tm.rename]
 
 @[simp]
 theorem Ren.lift_succ (r : Ren n m) : r.lift ∘ Fin.succ = Fin.succ ∘ r := by
@@ -50,38 +50,37 @@ theorem Tm.weaken_rename (t : Tm n) (r : Ren n m) :
 @[simp]
 theorem Subst.rename_lift (σ : Subst n m) (r : Ren m k) :
     Subst.lift (fun i => (σ i).rename r) = fun i => (σ.lift i).rename r.lift := by
-  funext i; induction i using Fin.cases <;> simp [Ren.lift, Tm.weaken]
+  funext i; induction i using Fin.cases <;> simp [Ren.lift, Tm.weaken, Tm.rename, Subst.lift]
 
 @[simp]
 theorem Tm.subst_rename (t : Tm n) (σ : Subst n m) (r : Ren m k) :
     (t.subst σ).rename r = t.subst (fun i => (σ i).rename r) := by
-  induction t generalizing m k <;> simp_all
+  induction t generalizing m k <;> simp_all [Tm.subst, Tm.rename]
 
 @[simp]
 theorem Ren.subst_lift (r : Ren n m) (σ : Subst m k) :
     Subst.lift (fun i => σ (r i)) = fun i => Subst.lift σ (Ren.lift r i) := by
-  funext i; induction i using Fin.cases <;> simp [Ren.lift]
+  funext i; induction i using Fin.cases <;> simp [Ren.lift, Subst.lift]
 
 @[simp]
 theorem Tm.rename_subst (t : Tm n) (r : Ren n m) (σ : Subst m k) :
     (t.rename r).subst σ = t.subst (fun i => σ (r i)) := by
-  induction t generalizing m k <;> simp_all
+  induction t generalizing m k <;> simp_all [Tm.rename, Tm.subst]
 
 theorem Subst.lift_succ (σ : Subst n m) :
     (fun i => Subst.lift σ (Fin.succ i)) = fun i => (σ i).rename Fin.succ := by
-  funext i; simp [Tm.weaken]
+  funext i; simp [Tm.weaken, Subst.lift]
 
-@[simp]
 theorem Tm.weaken_subst (t : Tm n) (σ : Subst n m) :
-    t.weaken.subst (Subst.lift σ) = (t.subst σ).weaken := by simp [Tm.weaken]
+    t.weaken.subst (Subst.lift σ) = (t.subst σ).weaken := by simp [Tm.weaken, Subst.lift]
 
 @[simp]
 theorem Subst.var_lift : Subst.lift (Tm.var : Subst n n) = (Tm.var : Subst (n + 1) (n + 1)) := by
-  funext i; induction i using Fin.cases <;> simp [Tm.weaken]
+  funext i; induction i using Fin.cases <;> simp [Tm.weaken, Tm.rename, Subst.lift]
 
 @[simp]
 theorem Tm.subst_var (t : Tm n) : t.subst Tm.var = t := by
-  induction t <;> simp_all
+  induction t <;> simp_all [Tm.subst]
 
 @[simp]
 theorem Tm.weaken_subst1 (t : Tm n) (v : Tm n) : t.weaken [/ v] = t := by
@@ -90,21 +89,21 @@ theorem Tm.weaken_subst1 (t : Tm n) (v : Tm n) : t.weaken [/ v] = t := by
 @[simp]
 theorem Subst.lift_subst (σ₁ : Subst n m) (σ₂ : Subst m k) :
     Subst.lift (fun i => (σ₁ i).subst σ₂) = fun i => (σ₁.lift i).subst σ₂.lift := by
-  funext i; induction i using Fin.cases <;> simp
-
+  funext i; induction i using Fin.cases <;> simp [Tm.weaken, Tm.subst, Subst.lift]
 @[simp]
 theorem Tm.subst_subst (t : Tm n) (σ₁ : Subst n m) (σ₂ : Subst m k) :
     (t.subst σ₁).subst σ₂ = t.subst (fun i => (σ₁ i).subst σ₂) := by
-  induction t generalizing m k <;> simp_all
+  induction t generalizing m k <;> simp_all [Tm.subst]
 
 @[simp]
 theorem Tm.subst1_subst (t : Tm (n + 1)) (u : Tm n) (θ : Subst n m) :
     (t [/ u]).subst θ = t.subst θ.lift [/u.subst θ] := by
-  simp [Tm.subst1]; congr 1; funext i; induction i using Fin.cases <;> simp [Subst.single, Tm.weaken]
+  simp [Tm.subst1]; congr 1; funext i
+  induction i using Fin.cases <;> simp [Subst.single, Tm.subst, Subst.lift, Tm.weaken]
 
 theorem Ren.single_lift (r : Ren n m) (u : Tm n) :
     (fun i => (Subst.single u i).rename r) = fun i => Subst.single (u.rename r) (Ren.lift r i) := by
-  funext i; induction i using Fin.cases <;> simp [Subst.single, Ren.lift]
+  funext i; induction i using Fin.cases <;> simp [Subst.single, Ren.lift, Tm.rename]
 
 @[simp]
 theorem Tm.subst1_rename (t : Tm (n + 1)) (u : Tm n) (r : Ren n m) :

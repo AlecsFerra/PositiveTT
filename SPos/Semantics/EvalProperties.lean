@@ -31,7 +31,7 @@ variable [ScottDomain D Label]
 theorem Tm.eval_rename (t : Tm n) (r : Ren n m) (ρ : DEnv m)
   : ⟦ t.rename r ⟧𝒄 ρ = ⟦ t ⟧𝒄 (ρ.rename r) := by
   induction t generalizing m
-  all_goals simp_all
+  all_goals simp_all [Tm.rename]
 
 /-- Weakening a term makes it ignore the newest variable. -/
 @[simp]
@@ -49,18 +49,20 @@ theorem Subst.get_eval (σ : Subst n m) (ρ : DEnv m) (i : Fin n) :
 @[simp]
 theorem Subst.eval_lift_cons (σ : Subst n m) (ρ : DEnv m) (d : D) :
     (σ.lift).eval (ρ ∷ d) = σ.eval ρ ∷ d := by
-  apply Env.ext; intro i; induction i using Fin.cases <;> simp
+  apply Env.ext; intro i
+  induction i using Fin.cases <;> simp [Subst.lift]
 
 @[simp]
 theorem Subst.eval_single (u : Tm n) (ρ : DEnv n) :
     (Subst.single u).eval ρ = ρ ∷ ⟦ u ⟧𝒄 ρ := by
-  apply Env.ext; intro i; induction i using Fin.cases <;> simp [Subst.single]
+  apply Env.ext; intro i
+  induction i using Fin.cases <;> simp [Subst.single]
 
 @[simp]
 theorem Tm.eval_subst (t : Tm n) (σ : Subst n m) (ρ : DEnv m)
   : ⟦ t.subst σ ⟧𝒄 ρ = ⟦ t ⟧𝒄 (σ.eval ρ) := by
   induction t generalizing m
-  all_goals simp_all
+  all_goals simp_all [Tm.subst]
 
 @[simp]
 theorem Tm.eval_subst1 (t : Tm (n + 1)) (u : Tm n) (ρ : DEnv n) :

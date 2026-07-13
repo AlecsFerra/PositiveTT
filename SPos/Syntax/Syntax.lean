@@ -20,7 +20,6 @@ def Ren (n m : Nat) := Fin n → Fin m
 def Ren.lift (ρ : Ren n m) : Ren (n + 1) (m + 1) :=
   Fin.cases 0 (fun i => (ρ i).succ)
 
-@[simp]
 def Tm.rename (ρ : Ren n m) : Tm n → Tm m
 | .var i     => .var (ρ i)
 | .pi τ υ    => .pi (τ.rename ρ) (υ.rename ρ.lift)
@@ -34,11 +33,9 @@ prefix:(max - 1) "↑" => Tm.weaken
 @[simp]
 def Subst (n m : Nat) := Fin n → Tm m
 
-@[simp]
 def Subst.lift (σ : Subst n m) : Subst (n + 1) (m + 1) :=
   Fin.cases (Tm.var 0) (fun i => (σ i).weaken)
 
-@[simp]
 def Tm.subst (σ : Subst n m) : Tm n → Tm m
 | .var i     => σ i
 | .pi τ υ    => .pi (τ.subst σ) (υ.subst σ.lift)

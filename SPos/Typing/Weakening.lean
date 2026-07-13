@@ -46,7 +46,7 @@ theorem DefEq.rename (heq : Γ ⊢ t ≡ t' ∶ τ) (hΔ : ⊢ Δ) (hr : Ren.Wel
       exact DefEq.β (WfTm.rename hlam hΔ hr) (WfTm.rename hm hΔ hr)
   | .η ht => by
       have h0 : Ren.lift r 0 = 0 := by simp [Ren.lift]
-      simp
+      simp [Tm.rename]
       rw [h0]
       exact DefEq.η (WfTm.rename ht hΔ hr)
 end
