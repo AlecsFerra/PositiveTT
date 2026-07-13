@@ -109,33 +109,3 @@ theorem Ren.single_lift (r : Ren n m) (u : Tm n) :
 theorem Tm.subst1_rename (t : Tm (n + 1)) (u : Tm n) (r : Ren n m) :
     (t [/ u]).rename r = t.rename r.lift [/u.rename r] := by
   simp [Tm.subst1, Ren.single_lift]
-
--- Structural push-through lemmas for the identity constructors: `rename`/`subst`
--- distribute over `id`/`refl`/`j` definitionally.  Kept as targeted `@[simp]` on the
--- new constructors so the folded-def convention for the general operations is preserved.
-@[simp]
-theorem Tm.rename_id (τ a b : Tm n) (r : Ren n m) :
-    (Tm.id τ a b).rename r = Tm.id (τ.rename r) (a.rename r) (b.rename r) := rfl
-@[simp]
-theorem Tm.rename_refl (τ a : Tm n) (r : Ren n m) :
-    (Tm.refl τ a).rename r = Tm.refl (τ.rename r) (a.rename r) := rfl
-@[simp]
-theorem Tm.rename_j (c : Tm (n + 2)) (d p : Tm n) (r : Ren n m) :
-    (Tm.j c d p).rename r = Tm.j (c.rename r.lift.lift) (d.rename r) (p.rename r) := rfl
-@[simp]
-theorem Tm.subst_id (τ a b : Tm n) (σ : Subst n m) :
-    (Tm.id τ a b).subst σ = Tm.id (τ.subst σ) (a.subst σ) (b.subst σ) := rfl
-@[simp]
-theorem Tm.subst_refl (τ a : Tm n) (σ : Subst n m) :
-    (Tm.refl τ a).subst σ = Tm.refl (τ.subst σ) (a.subst σ) := rfl
-@[simp]
-theorem Tm.subst_j (c : Tm (n + 2)) (d p : Tm n) (σ : Subst n m) :
-    (Tm.j c d p).subst σ = Tm.j (c.subst σ.lift.lift) (d.subst σ) (p.subst σ) := rfl
-
--- The de Bruijn variable `# 0` is fixed by a lifted renaming/substitution.
-@[simp]
-theorem Tm.rename_var_zero (r : Ren n m) : (# (0 : Fin (n + 1))).rename r.lift = # 0 := by
-  simp [Tm.rename, Ren.lift]
-@[simp]
-theorem Tm.subst_var_zero (σ : Subst n m) : (# (0 : Fin (n + 1))).subst σ.lift = # 0 := by
-  simp [Tm.subst, Subst.lift]
