@@ -51,7 +51,7 @@ theorem DefEq.rename (heq : Γ ⊢ t ≡ t' ∶ τ) (hΔ : ⊢ Δ) (hr : Ren.Wel
       exact DefEq.lamη (DefEq.rename ht hΔ hr)
   | .id hτeq haeq hbeq =>
       .id (DefEq.rename hτeq hΔ hr) (DefEq.rename haeq hΔ hr) (DefEq.rename hbeq hΔ hr)
-  | .reflId hτeq haeq => .reflId (DefEq.rename hτeq hΔ hr) (DefEq.rename haeq hΔ hr)
+  | .refl hτeq haeq => .refl (DefEq.rename hτeq hΔ hr) (DefEq.rename haeq hΔ hr)
   | .j hτ hIdT hCeq hdeq hpeq => by
       have hτ' := DefEq.rename hτ hΔ hr
       have hIdT' := DefEq.rename hIdT (hΔ.cons hτ') hr.lift

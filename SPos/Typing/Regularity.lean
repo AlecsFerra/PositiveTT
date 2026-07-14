@@ -4,7 +4,7 @@ theorem DefEq.wfCtx (h : Γ ⊢ t ≡ t' ∶ τ) : ⊢ Γ :=
   match h with
   | .var hΓ _ | .u hΓ => hΓ
   | .symm h | .trans h _ | .conv h _ _ | .pi h _ | .app h _ | .lamη h
-  | .id h _ _ | .reflId h _ | .lam _ h _ | .lamβ h _ _ _
+  | .id h _ _ | .refl h _ | .lam _ h _ | .lamβ h _ _ _
   | .j h _ _ _ _ | .jβ h _ _ _ _ => h.wfCtx
 
 theorem WfCtx.lookup_wf (hΓ : ⊢ Γ) (hlook : Γ ∋ x ∶ τ) : ∃ ℓ, Γ ⊢ τ ∶ 𝓤 ℓ :=
@@ -35,7 +35,7 @@ abbrev IdInv (Γ : Ctx n) (Z : Tm n) : Prop :=
 theorem DefEq.inv_aux (h : Γ ⊢ X ≡ Y ∶ υ) :
     (PiInv Γ X ∧ IdInv Γ X) ∧ (PiInv Γ Y ∧ IdInv Γ Y) :=
   match h with
-  | .var _ _ | .u _ | .lam _ _ _ | .app _ _ | .reflId _ _ | .j _ _ _ _ _ =>
+  | .var _ _ | .u _ | .lam _ _ _ | .app _ _ | .refl _ _ | .j _ _ _ _ _ =>
       ⟨⟨fun _ _ h => (nomatch h), fun _ _ _ h => (nomatch h)⟩,
        ⟨fun _ _ h => (nomatch h), fun _ _ _ h => (nomatch h)⟩⟩
   | .symm h =>
@@ -126,7 +126,7 @@ theorem DefEq.regular {Γ : Ctx n} {t t' τ : Tm n} (h : Γ ⊢ t ≡ t' ∶ τ)
   | .conv _ hσ _ => ⟨_, hσ⟩
   | .pi hτeq _ => ⟨_, .u hτeq.wfCtx⟩
   | .lam hσ hτeq _ => ⟨_, .pi hτeq.wf_left hσ⟩
-  | .app (m := m) ht hm => by
+  | .app (m₁ := m) ht hm => by
       obtain ⟨_, hPi⟩ := ht.regular
       obtain ⟨τ', _, ℓ₂, hττ', hσd⟩ := hPi.pi_inv (Or.inl rfl)
       have hm' : Γ ⊢ m ∶ τ' := .conv hm.wf_left hττ'.wf_left hττ'.symm
@@ -134,7 +134,7 @@ theorem DefEq.regular {Γ : Ctx n} {t t' τ : Tm n} (h : Γ ⊢ t ≡ t' ∶ τ)
   | .lamβ _ hσwf _ hm => ⟨_, DefEq.subst1 hσwf hm hm.wfCtx⟩
   | .lamη ht => ht.regular
   | .id hτeq _ _ => ⟨_, .u hτeq.wfCtx⟩
-  | .reflId hτeq haeq => ⟨_, .id hτeq.wf_left haeq.wf_left haeq.wf_left⟩
+  | .refl hτeq haeq => ⟨_, .id hτeq.wf_left haeq.wf_left haeq.wf_left⟩
   | .j (τ := υ₀) (a := a) (b := b) _ _ hCeq _ hpeq => by
       -- rebuild `Γ ⊢ C [/ ↑p ] [/ b ] ∶ 𝓤 ℓ` by substituting b under the Id
       -- binder (a simultaneous [p, b] split into two steps)

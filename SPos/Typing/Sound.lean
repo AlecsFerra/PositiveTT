@@ -84,7 +84,7 @@ theorem DefEq.sound {Γ : Ctx n} {t t' τ : Tm n} (ht : Γ ⊢ t ≡ t' ∶ τ) 
     obtain ⟨W, hW⟩ := mem_U.mp hself
     obtain rfl := hX.det hW
     exact ⟨_, mem_U.mpr ⟨_, hW.symm.trans hZ⟩, _, (hW.symm.trans hZ).refl_left, hElt⟩
-  | .pi (τ := τ) (υ := υ) (υ' := υ') (ℓ₁ := ℓ₁) (ℓ₂ := ℓ₂) hτ hυ => by
+  | .pi (τ₁ := τ) (υ₁ := υ) (υ₂ := υ') (ℓ₁ := ℓ₁) (ℓ₂ := ℓ₂) hτ hυ => by
     obtain ⟨_, _, _, hk₂, hrelτ⟩ := DefEq.sound hτ hρ
     simp [Tm.eval, mk_lam_apply] at hk₂
     obtain ⟨-, -, rfl⟩ := decode_univ_inv hk₂
@@ -124,7 +124,7 @@ theorem DefEq.sound {Γ : Ctx n} {t t' τ : Tm n} (ht : Γ ⊢ t ≡ t' ∶ τ) 
       Decode.univ (by omega)
     exact ⟨max ℓ₁ ℓ₂ + 1, mem_U.mpr ⟨_, by simpa [Tm.eval] using hu⟩, _,
       by simpa [Tm.eval] using hu, mem_U.mpr ⟨_, by simpa [Tm.eval] using hpi⟩⟩
-  | .lam (τ := τ) (σ := σ) (ℓ := ℓ₁) (ℓ' := ℓ₂) hσ hτeq ht => by
+  | .lam (τ₁ := τ) (υ := σ) (ℓ := ℓ₁) (ℓ' := ℓ₂) hσ hτeq ht => by
     obtain ⟨_, _, _, hk₂, hrelτ⟩ := DefEq.sound hτeq hρ
     simp [Tm.eval, mk_lam_apply] at hk₂
     obtain ⟨-, -, rfl⟩ := decode_univ_inv hk₂
@@ -161,7 +161,7 @@ theorem DefEq.sound {Γ : Ctx n} {t t' τ : Tm n} (ht : Γ ⊢ t ≡ t' ∶ τ) 
     obtain ⟨_, _, _, hk'', hmemt⟩ := DefEq.sound ht (hρ.cons hA hdd')
     obtain rfl := hk''.det (hB hdd')
     simpa [Tm.eval, ScottDomain.lam.ret_inj] using hmemt
-  | .app (σ := σ) (m := m) ht' hm' => by
+  | .app (υ := σ) (m₁ := m) ht' hm' => by
     obtain ⟨k, hU, hElt⟩ := DefEq.sound ht' hρ
     obtain ⟨X, hk⟩ := mem_U.mp hU
     rw [El_eq_of_decode hk] at hElt
@@ -176,7 +176,7 @@ theorem DefEq.sound {Γ : Ctx n} {t t' τ : Tm n} (ht : Γ ⊢ t ≡ t' ∶ τ) 
     have hd : Decode k (⟦ σ [/ m ] ⟧𝒄 ρ) (⟦ σ [/ m ] ⟧𝒄 ρ') (B (⟦ m ⟧𝒄 ρ)) := by
       simpa [Tm.eval_subst1, mk_lam_apply] using hB hmems
     exact ⟨_, mem_U.mpr ⟨_, hd⟩, _, hd.refl_left, by simpa [Tm.eval] using hElt _ _ hmemm⟩
-  | .lamβ (σ := σ) (m := m) (ℓ' := ℓ') hτ hσ ht hm => by
+  | .lamβ (υ := σ) (m := m) (ℓ' := ℓ') hτ hσ ht hm => by
     obtain ⟨_, _, _, hkτ, hmemτ⟩ := DefEq.sound hτ hρ
     simp [Tm.eval, mk_lam_apply] at hkτ
     obtain ⟨-, -, rfl⟩ := decode_univ_inv hkτ
@@ -218,7 +218,7 @@ theorem DefEq.sound {Γ : Ctx n} {t t' τ : Tm n} (ht : Γ ⊢ t ≡ t' ∶ τ) 
     have hu : Decode (ℓ + 1) (mkU ℓ : D) (mkU ℓ) (U ℓ) := Decode.univ (by omega)
     exact ⟨ℓ + 1, mem_U.mpr ⟨_, by simpa [Tm.eval] using hu⟩, _, by simpa [Tm.eval] using hu,
       mem_U.mpr ⟨_, by simpa [Tm.eval] using Decode.id hA hmema hmemb⟩⟩
-  | .reflId (a := a) _ haeq => by
+  | .refl (a₁ := a) _ haeq => by
     obtain ⟨_, hUa, _, hka, hmema⟩ := DefEq.sound haeq hρ
     obtain ⟨A, hA⟩ := mem_U.mp hUa
     rw [hka.det hA] at hmema
@@ -229,7 +229,7 @@ theorem DefEq.sound {Γ : Ctx n} {t t' τ : Tm n} (ht : Γ ⊢ t ≡ t' ∶ τ) 
       by simpa [Tm.eval] using (Decode.id hA hmemaa hmemaa).refl_left, ?_⟩
     simp only [Tm.eval, mk_lam_apply]
     exact PER.refl_left A hmemaa
-  | .j (τ := τ) (a := a) (b := b) (C := C) (ℓ := ℓ) (p := p) _ _ hCeq hdeq hpeq => by
+  | .j (τ := τ) (a := a) (b := b) (C₁ := C) (ℓ := ℓ) (p₁ := p) _ _ hCeq hdeq hpeq => by
     -- semantic content of `p ≡ p' : Id τ a b` (also yields p's own coherence,
     -- since `PER.id` only looks at the endpoints)
     obtain ⟨_, hUp, _, hkp, hmemp⟩ := DefEq.sound hpeq hρ
