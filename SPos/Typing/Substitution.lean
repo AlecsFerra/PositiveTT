@@ -38,17 +38,16 @@ theorem WfTm.subst (ht : Γ ⊢ t ∶ τ) (hΔ : ⊢ Δ) (hσ : Subst.WellTyped 
   | .id hτ ha hb =>
       .id (WfTm.subst hτ hΔ hσ) (WfTm.subst ha hΔ hσ) (WfTm.subst hb hΔ hσ)
   | .refl ha => .refl (WfTm.subst ha hΔ hσ)
-  | .j hτ ha hIdT hC hp hCbp hd => by
+  | .j hτ hIdT hC hp hd => by
       have hτ' := WfTm.subst hτ hΔ hσ
       have hΔτ := hΔ.cons hτ'
       have hIdT' := WfTm.subst hIdT hΔτ (hσ.lift hΔτ)
       have hΔτId := hΔτ.cons hIdT'
       have hC' := WfTm.subst hC hΔτId (hσ.lift2 hΔτ hΔτId)
-      have hCbp' := WfTm.subst hCbp hΔ hσ
       have hd' := WfTm.subst hd hΔ hσ
       simp only [Tm.subst, Tm.subst1_subst, Tm.weaken_subst, Subst.lift, Fin.cases_zero]
-        at hIdT' hC' hCbp' hd' ⊢
-      exact WfTm.j hτ' (WfTm.subst ha hΔ hσ) hIdT' hC' (WfTm.subst hp hΔ hσ) hCbp' hd'
+        at hIdT' hC' hd' ⊢
+      exact WfTm.j hτ' hIdT' hC' (WfTm.subst hp hΔ hσ) hd'
   | .u hΓ => .u hΔ
 
 theorem DefEq.subst (heq : Γ ⊢ t₁ ≡ t₂ ∶ τ) (hΔ : ⊢ Δ) (hσ : Subst.WellTyped σ Γ Δ)
@@ -56,17 +55,16 @@ theorem DefEq.subst (heq : Γ ⊢ t₁ ≡ t₂ ∶ τ) (hΔ : ⊢ Δ) (hσ : Su
   | .refl ht => .refl (WfTm.subst ht hΔ hσ)
   | .symm h => .symm (DefEq.subst h hΔ hσ)
   | .trans h₁ h₂ => .trans (DefEq.subst h₁ hΔ hσ) (DefEq.subst h₂ hΔ hσ)
-  | .pi hτwf hυwf hτ hυ =>
+  | .pi hτwf hτ hυ =>
       let hτ' := WfTm.subst hτwf hΔ hσ
-      .pi hτ' (WfTm.subst hυwf (hΔ.cons hτ') (hσ.lift (hΔ.cons hτ')))
-        (DefEq.subst hτ hΔ hσ) (DefEq.subst hυ (hΔ.cons hτ') (hσ.lift (hΔ.cons hτ')))
+      .pi hτ' (DefEq.subst hτ hΔ hσ) (DefEq.subst hυ (hΔ.cons hτ') (hσ.lift (hΔ.cons hτ')))
   | .lam hτ hσwf ht =>
       let hτ' := WfTm.subst hτ hΔ hσ
       .lam hτ' (WfTm.subst hσwf (hΔ.cons hτ') (hσ.lift (hΔ.cons hτ')))
         (DefEq.subst ht (hΔ.cons hτ') (hσ.lift (hΔ.cons hτ')))
-  | .app ht hmwf hm => by
+  | .app ht hm => by
       simp
-      exact DefEq.app (DefEq.subst ht hΔ hσ) (WfTm.subst hmwf hΔ hσ) (DefEq.subst hm hΔ hσ)
+      exact DefEq.app (DefEq.subst ht hΔ hσ) (DefEq.subst hm hΔ hσ)
   | .lamβ hlam hm => by
       simp
       exact DefEq.lamβ (WfTm.subst hlam hΔ hσ) (WfTm.subst hm hΔ hσ)
@@ -75,23 +73,19 @@ theorem DefEq.subst (heq : Γ ⊢ t₁ ≡ t₂ ∶ τ) (hΔ : ⊢ Δ) (hσ : Su
       simp [Tm.subst]
       rw [Tm.weaken_subst, h0]
       exact DefEq.lamη (WfTm.subst ht hΔ hσ)
-  | .id hτ ha hb hτeq haeq hbeq =>
-      .id (WfTm.subst hτ hΔ hσ) (WfTm.subst ha hΔ hσ) (WfTm.subst hb hΔ hσ)
-        (DefEq.subst hτeq hΔ hσ) (DefEq.subst haeq hΔ hσ) (DefEq.subst hbeq hΔ hσ)
-  | .reflId ha haeq => .reflId (WfTm.subst ha hΔ hσ) (DefEq.subst haeq hΔ hσ)
-  | .j hτ ha hIdT hC hd hp hCeq hdeq hpeq => by
+  | .id hτeq haeq hbeq =>
+      .id (DefEq.subst hτeq hΔ hσ) (DefEq.subst haeq hΔ hσ) (DefEq.subst hbeq hΔ hσ)
+  | .reflId haeq => .reflId (DefEq.subst haeq hΔ hσ)
+  | .j hτ hIdT hCeq hdeq hpeq => by
       have hτ' := WfTm.subst hτ hΔ hσ
       have hΔτ := hΔ.cons hτ'
       have hIdT' := WfTm.subst hIdT hΔτ (hσ.lift hΔτ)
       have hΔτId := hΔτ.cons hIdT'
-      have hC' := WfTm.subst hC hΔτId (hσ.lift2 hΔτ hΔτId)
       have hCeq' := DefEq.subst hCeq hΔτId (hσ.lift2 hΔτ hΔτId)
-      have hd' := WfTm.subst hd hΔ hσ
       have hdeq' := DefEq.subst hdeq hΔ hσ
       simp only [Tm.subst, Tm.subst1_subst, Tm.weaken_subst, Subst.lift, Fin.cases_zero]
-        at hIdT' hC' hCeq' hd' hdeq' ⊢
-      exact DefEq.j hτ' (WfTm.subst ha hΔ hσ) hIdT' hC' hd' (WfTm.subst hp hΔ hσ)
-        hCeq' hdeq' (DefEq.subst hpeq hΔ hσ)
+        at hIdT' hCeq' hdeq' ⊢
+      exact DefEq.j hτ' hIdT' hCeq' hdeq' (DefEq.subst hpeq hΔ hσ)
   | .jβ hτ ha hIdT hC hd => by
       have hτ' := WfTm.subst hτ hΔ hσ
       have hΔτ := hΔ.cons hτ'

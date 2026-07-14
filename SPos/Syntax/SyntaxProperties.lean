@@ -109,3 +109,13 @@ theorem Ren.single_lift (r : Ren n m) (u : Tm n) :
 theorem Tm.subst1_rename (t : Tm (n + 1)) (u : Tm n) (r : Ren n m) :
     (t [/ u]).rename r = t.rename r.lift [/u.rename r] := by
   simp [Tm.subst1, Ren.single_lift]
+
+-- Substituting under the last binder and then instantiating it agrees with the
+-- nested single substitutions `[/ ↑p ] [/ b ]` (both are the simultaneous [p, b]).
+theorem Tm.subst_lift_single (t : Tm (n + 2)) (b p : Tm n) :
+    (t.subst (Subst.lift (Subst.single b))) [/ p ] = t [/ ↑ p ] [/ b ] := by
+  simp only [Tm.subst1, Tm.subst_subst]
+  congr 1; funext i
+  induction i using Fin.cases <;>
+    simp only [Subst.lift, Subst.single, Fin.cases_zero, Fin.cases_succ, Tm.subst,
+      Tm.weaken, Tm.rename_subst, Tm.subst_var]

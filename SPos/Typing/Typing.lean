@@ -28,11 +28,10 @@ inductive WfTm : Ctx n → Tm n → Tm n → Prop where
 -- Identity
 | id   : Γ ⊢ τ ∶ 𝓤 ℓ → Γ ⊢ a ∶ τ → Γ ⊢ b ∶ τ → Γ ⊢ Id τ a b ∶ 𝓤 ℓ
 | refl : Γ ⊢ a ∶ τ → Γ ⊢ refl τ a ∶ Id τ a a
-| j : Γ ⊢ τ ∶ 𝓤 ℓ₁ → Γ ⊢ a ∶ τ →
+| j {a : Tm n} : Γ ⊢ τ ∶ 𝓤 ℓ₁ →
       Γ ∷ τ ⊢ Id (↑ τ) (↑ a) # 0 ∶ 𝓤 ℓ₁ →
       Γ ∷ τ ∷ Id (↑ τ) (↑ a) # 0 ⊢ C ∶ 𝓤 ℓ →
       Γ ⊢ p ∶ Id τ a b →
-      Γ ⊢ C [/ ↑ p ] [/ b ] ∶ 𝓤 ℓ →
       Γ ⊢ d ∶ C [/ refl (↑ τ) (↑ a) ] [/ a ] →
       Γ ⊢ J C d p ∶ C [/ ↑ p ] [/ b ]
 -- Universe
@@ -43,21 +42,17 @@ inductive DefEq : Ctx n → Tm n → Tm n → Tm n → Prop where
 | symm  : Γ ⊢ t ≡ t' ∶ τ → Γ ⊢ t' ≡ t ∶ τ
 | trans : Γ ⊢ t ≡ t' ∶ τ → Γ ⊢ t' ≡ t'' ∶ τ → Γ ⊢ t ≡ t'' ∶ τ
 -- Pi
-| pi : Γ ⊢ τ ∶ 𝓤 ℓ₁ → Γ ∷ τ ⊢ υ ∶ 𝓤 ℓ₂ → Γ ⊢ τ ≡ τ' ∶ 𝓤 ℓ₁ → Γ ∷ τ ⊢ υ ≡ υ' ∶ 𝓤 ℓ₂ → Γ ⊢ Π τ υ ≡ Π τ' υ' ∶ 𝓤 (max ℓ₁ ℓ₂)
+| pi : Γ ⊢ τ ∶ 𝓤 ℓ₁ → Γ ⊢ τ ≡ τ' ∶ 𝓤 ℓ₁ → Γ ∷ τ ⊢ υ ≡ υ' ∶ 𝓤 ℓ₂ → Γ ⊢ Π τ υ ≡ Π τ' υ' ∶ 𝓤 (max ℓ₁ ℓ₂)
 | lam : Γ ⊢ τ ∶ 𝓤 ℓ → Γ ∷ τ ⊢ σ ∶ 𝓤 ℓ' → Γ ∷ τ ⊢ t ≡ t' ∶ σ → Γ ⊢ ƛ τ t ≡ ƛ τ t' ∶ (Π τ σ)
-| app : Γ ⊢ t ≡ t' ∶ (Π τ σ) → Γ ⊢ m ∶ τ → Γ ⊢ m ≡ m' ∶ τ → Γ ⊢ t • m ≡ t' • m' ∶ σ [/ m ]
+| app : Γ ⊢ t ≡ t' ∶ (Π τ σ) → Γ ⊢ m ≡ m' ∶ τ → Γ ⊢ t • m ≡ t' • m' ∶ σ [/ m ]
 | lamβ : Γ ⊢ ƛ τ t ∶ (Π τ σ) → Γ ⊢ m ∶ τ → Γ ⊢ (ƛ τ t) • m ≡ t [/ m ] ∶ σ [/ m ]
 | lamη : Γ ⊢ t ∶ Π τ υ → Γ ⊢ t ≡ ƛ τ (↑ t) • # 0 ∶ Π τ υ
 -- Identity
-| id : Γ ⊢ τ ∶ 𝓤 ℓ → Γ ⊢ a ∶ τ → Γ ⊢ b ∶ τ →
-       Γ ⊢ τ ≡ τ' ∶ 𝓤 ℓ → Γ ⊢ a ≡ a' ∶ τ → Γ ⊢ b ≡ b' ∶ τ →
+| id : Γ ⊢ τ ≡ τ' ∶ 𝓤 ℓ → Γ ⊢ a ≡ a' ∶ τ → Γ ⊢ b ≡ b' ∶ τ →
        Γ ⊢ Id τ a b ≡ Id τ' a' b' ∶ 𝓤 ℓ
-| reflId : Γ ⊢ a ∶ τ → Γ ⊢ a ≡ a' ∶ τ → Γ ⊢ refl τ a ≡ refl τ a' ∶ Id τ a a
-| j : Γ ⊢ τ ∶ 𝓤 ℓ₁ → Γ ⊢ a ∶ τ →
+| reflId : Γ ⊢ a ≡ a' ∶ τ → Γ ⊢ refl τ a ≡ refl τ a' ∶ Id τ a a
+| j {a : Tm n} : Γ ⊢ τ ∶ 𝓤 ℓ₁ →
       Γ ∷ τ ⊢ Id (↑ τ) (↑ a) # 0 ∶ 𝓤 ℓ₁ →
-      Γ ∷ τ ∷ Id (↑ τ) (↑ a) # 0 ⊢ C ∶ 𝓤 ℓ →
-      Γ ⊢ d ∶ C [/ refl (↑ τ) (↑ a) ] [/ a ] →
-      Γ ⊢ p ∶ Id τ a b →
       Γ ∷ τ ∷ Id (↑ τ) (↑ a) # 0 ⊢ C ≡ C' ∶ 𝓤 ℓ →
       Γ ⊢ d ≡ d' ∶ C [/ refl (↑ τ) (↑ a) ] [/ a ] →
       Γ ⊢ p ≡ p' ∶ Id τ a b →
