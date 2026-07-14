@@ -262,7 +262,7 @@ theorem DefEq.sound {Γ : Ctx n} {t t' τ : Tm n} (ht : Γ ⊢ t ≡ t' ∶ τ) 
       Decode.univ (by omega)
     exact ⟨max ℓ₁ ℓ₂ + 1, mem_U.mpr ⟨_, by simpa [Tm.eval] using hu⟩, _,
       by simpa [Tm.eval] using hu, mem_U.mpr ⟨_, by simpa [Tm.eval] using hpi⟩⟩
-  | .lam (σ := σ) (ℓ := ℓ₁) (ℓ' := ℓ₂) hτ hσ ht => by
+  | .lam (σ := σ) (ℓ := ℓ₁) (ℓ' := ℓ₂) hτ hσ _ ht => by
     obtain ⟨_, _, _, hk, hmemτ⟩ := WfTm.sound hτ hρ
     simp [Tm.eval, mk_lam_apply] at hk
     obtain ⟨-, -, rfl⟩ := decode_univ_inv hk
@@ -348,7 +348,7 @@ theorem DefEq.sound {Γ : Ctx n} {t t' τ : Tm n} (ht : Γ ⊢ t ≡ t' ∶ τ) 
     have hu : Decode (ℓ + 1) (mkU ℓ : D) (mkU ℓ) (U ℓ) := Decode.univ (by omega)
     exact ⟨ℓ + 1, mem_U.mpr ⟨_, by simpa [Tm.eval] using hu⟩, _, by simpa [Tm.eval] using hu,
       mem_U.mpr ⟨_, by simpa [Tm.eval] using Decode.id hA hmema hmemb⟩⟩
-  | .reflId (a := a) haeq => by
+  | .reflId (a := a) _ haeq => by
     obtain ⟨_, hUa, _, hka, hmema⟩ := DefEq.sound haeq hρ
     obtain ⟨A, hA⟩ := mem_U.mp hUa
     rw [hka.det hA] at hmema

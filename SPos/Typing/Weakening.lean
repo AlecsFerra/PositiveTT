@@ -52,8 +52,9 @@ theorem DefEq.rename (heq : Γ ⊢ t ≡ t' ∶ τ) (hΔ : ⊢ Δ) (hr : Ren.Wel
   | .trans h₁ h₂ => .trans (DefEq.rename h₁ hΔ hr) (DefEq.rename h₂ hΔ hr)
   | .pi hτwf hτ hυ => .pi (WfTm.rename hτwf hΔ hr)
       (DefEq.rename hτ hΔ hr) (DefEq.rename hυ (hΔ.cons (WfTm.rename hτwf hΔ hr)) hr.lift)
-  | .lam hτ hσ ht => .lam (WfTm.rename hτ hΔ hr)
+  | .lam hτ hσ hτeq ht => .lam (WfTm.rename hτ hΔ hr)
       (WfTm.rename hσ (hΔ.cons (WfTm.rename hτ hΔ hr)) hr.lift)
+      (DefEq.rename hτeq hΔ hr)
       (DefEq.rename ht (hΔ.cons (WfTm.rename hτ hΔ hr)) hr.lift)
   | .app ht hm => by
       simp
@@ -68,7 +69,7 @@ theorem DefEq.rename (heq : Γ ⊢ t ≡ t' ∶ τ) (hΔ : ⊢ Δ) (hr : Ren.Wel
       exact DefEq.lamη (WfTm.rename ht hΔ hr)
   | .id hτeq haeq hbeq =>
       .id (DefEq.rename hτeq hΔ hr) (DefEq.rename haeq hΔ hr) (DefEq.rename hbeq hΔ hr)
-  | .reflId haeq => .reflId (DefEq.rename haeq hΔ hr)
+  | .reflId hτeq haeq => .reflId (DefEq.rename hτeq hΔ hr) (DefEq.rename haeq hΔ hr)
   | .j hτ hIdT hCeq hdeq hpeq => by
       have hτ' := WfTm.rename hτ hΔ hr
       have hIdT' := WfTm.rename hIdT (hΔ.cons hτ') hr.lift

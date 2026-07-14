@@ -58,9 +58,10 @@ theorem DefEq.subst (heq : Γ ⊢ t₁ ≡ t₂ ∶ τ) (hΔ : ⊢ Δ) (hσ : Su
   | .pi hτwf hτ hυ =>
       let hτ' := WfTm.subst hτwf hΔ hσ
       .pi hτ' (DefEq.subst hτ hΔ hσ) (DefEq.subst hυ (hΔ.cons hτ') (hσ.lift (hΔ.cons hτ')))
-  | .lam hτ hσwf ht =>
+  | .lam hτ hσwf hτeq ht =>
       let hτ' := WfTm.subst hτ hΔ hσ
       .lam hτ' (WfTm.subst hσwf (hΔ.cons hτ') (hσ.lift (hΔ.cons hτ')))
+        (DefEq.subst hτeq hΔ hσ)
         (DefEq.subst ht (hΔ.cons hτ') (hσ.lift (hΔ.cons hτ')))
   | .app ht hm => by
       simp
@@ -75,7 +76,7 @@ theorem DefEq.subst (heq : Γ ⊢ t₁ ≡ t₂ ∶ τ) (hΔ : ⊢ Δ) (hσ : Su
       exact DefEq.lamη (WfTm.subst ht hΔ hσ)
   | .id hτeq haeq hbeq =>
       .id (DefEq.subst hτeq hΔ hσ) (DefEq.subst haeq hΔ hσ) (DefEq.subst hbeq hΔ hσ)
-  | .reflId haeq => .reflId (DefEq.subst haeq hΔ hσ)
+  | .reflId hτeq haeq => .reflId (DefEq.subst hτeq hΔ hσ) (DefEq.subst haeq hΔ hσ)
   | .j hτ hIdT hCeq hdeq hpeq => by
       have hτ' := WfTm.subst hτ hΔ hσ
       have hΔτ := hΔ.cons hτ'
