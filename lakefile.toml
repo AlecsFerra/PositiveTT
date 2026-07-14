@@ -1,13 +1,9 @@
 name = "SPos"
 version = "0.1.0"
-defaultTargets = ["spos"]
+defaultTargets = ["SPos"]
 
 [[lean_lib]]
 name = "SPos"
-
-[[lean_exe]]
-name = "spos"
-root = "Main"
 
 [[require]]
 name = "mathlib"
