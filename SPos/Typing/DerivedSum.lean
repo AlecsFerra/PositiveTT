@@ -111,7 +111,6 @@ theorem DefEq.boolFam_cong (hΓ : ⊢ Γ) (hτ : Γ ⊢ τ₁ ≡ τ₂ ∶ 𝓤
   show Γ ∷ Tm.bool ⊢ _ ≡ _ ∶ (𝓤 ℓ) [/ (# 0) ]
   exact DefEq.boolrec hP ht hf hb
 
-
 theorem DefEq.sum :
    Γ ⊢ τ₁ ≡ τ₂ ∶ 𝓤 ℓ → Γ ⊢ υ₁ ≡ υ₂ ∶ 𝓤 ℓ
    ----------------------------------------
@@ -131,8 +130,7 @@ theorem DefEq.inl :
   intros hτ hυ ha
   have hΓ := hτ.wfCtx
   have hfam := DefEq.boolFam_true hΓ hτ hυ
-  exact DefEq.pair
-    (DefEq.bool hΓ)
+  exact DefEq.pair (DefEq.bool hΓ)
     (DefEq.boolFam_cong hΓ hτ hυ)
     (DefEq.true hΓ)
     (DefEq.conv ha hfam.wf_left hfam.symm)
@@ -147,15 +145,15 @@ theorem DefEq.inr :
 → Γ ⊢ b₁ ≡ b₂ ∶ υ
   -------------------------------------
 → Γ ⊢ .inr b₁ ≡ .inr b₂ ∶ .sumT ℓ τ υ
-  := by
-    intros hτ hυ hb
-    have hΓ := hτ.wfCtx
-    have hfam := DefEq.boolFam_false hΓ hτ hυ
-    exact DefEq.pair
-      (DefEq.bool hΓ)
-      (DefEq.boolFam_cong hΓ hτ hυ)
-      (DefEq.false hΓ)
-      (DefEq.conv hb hfam.wf_left hfam.symm)
+:= by
+  intros hτ hυ hb
+  have hΓ := hτ.wfCtx
+  have hfam := DefEq.boolFam_false hΓ hτ hυ
+  exact DefEq.pair
+    (DefEq.bool hΓ)
+    (DefEq.boolFam_cong hΓ hτ hυ)
+    (DefEq.false hΓ)
+    (DefEq.conv hb hfam.wf_left hfam.symm)
 
 private theorem DefEq.inr_wk (hΓB : ⊢ Γ ∷ B) (hτ : Γ ⊢ τ ∶ 𝓤 ℓ) (hυ : Γ ⊢ υ ∶ 𝓤 ℓ)
     (hb : Γ ∷ B ⊢ b ∶ ↑ υ) : Γ ∷ B ⊢ Tm.inr b ∶ ↑ (Tm.sumT ℓ τ υ) := by

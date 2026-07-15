@@ -121,3 +121,11 @@ theorem Tm.subst_lift_single (t : Tm (n + 2)) (b p : Tm n) :
 theorem Tm.rename_eq_subst (t : Tm n) (r : Ren n m) :
     t.rename r = t.subst (fun i => # (r i)) := by
   induction t generalizing m <;> simp_all [Tm.rename, Tm.subst]
+
+@[simp]
+theorem Ren.lift_zero : Ren.lift r 0 = 0 := by
+  simp [Ren.lift]
+
+-- @[simp]
+-- theorem Ren.lift_app_succ (r : Ren n m) : r.lift j.succ = (r j).succ := by
+--   simp [Ren.lift]

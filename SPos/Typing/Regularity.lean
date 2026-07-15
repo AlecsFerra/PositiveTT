@@ -71,10 +71,6 @@ theorem DefEq.inv_aux (h : Γ ⊢ t₁ ≡ t₂ ∶ τ)
     exact ⟨by grind, by grind, by grind,
       piInv_subst1 iht.1 ihm.1 hm, sigmaInv_subst1 iht.2.1 ihm.2.1 hm,
       idInv_subst1 iht.2.2.1 ihm.2.2.1 hm⟩
-  case bool => grind
-  case true => grind
-  case false => grind
-  case boolrec => grind
   all_goals grind (instances := 3500)
 
 theorem DefEq.pi_inv {σ : Tm (n + 1)} (h : Γ ⊢ X ≡ Y ∶ υ) (heq : X = Π τ₁ σ ∨ Y = Π τ₁ σ) :
