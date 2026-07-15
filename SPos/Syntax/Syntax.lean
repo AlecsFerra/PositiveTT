@@ -4,6 +4,17 @@ inductive Tm : (n : Nat) → Type where
 | pi  : Tm n → Tm (n + 1) → Tm n
 | lam : Tm n → Tm (n + 1) → Tm n
 | app : Tm n → Tm n → Tm n
+-- Sigma
+| sigma : Tm n → Tm (n + 1) → Tm n
+| pair  : Tm n → Tm n → Tm n
+| fst   : Tm n → Tm n
+| snd   : Tm n → Tm n
+-- Booleans (sums are derived from `bool` + `sigma`)
+| bool : Tm n
+| true : Tm n
+| false : Tm n
+-- dependent recursor: motive (binds bool), true branch, false branch, scrutinee
+| boolrec : Tm (n + 1) → Tm n → Tm n → Tm n → Tm n
 -- Identity
 | id   : Tm n → Tm n → Tm n → Tm n
 | refl : Tm n → Tm n → Tm n
@@ -17,11 +28,16 @@ notation "Π" => Tm.pi
 notation "ƛ" => Tm.lam
 infixr:(max - 1) "•" => Tm.app
 
-prefix:(max - 1) "𝓤" => Tm.u
+notation "Σ̶" => Tm.sigma
+notation "⸨" a " , " b "⸩" => Tm.pair a b
+abbrev pr₁ (p : Tm n) : Tm n := Tm.fst p
+abbrev pr₂ (p : Tm n) : Tm n := Tm.snd p
 
 notation "Id" => Tm.id
 notation "refl" => Tm.refl
 notation "J" => Tm.j
+
+prefix:(max - 1) "𝓤" => Tm.u
 
 def Ren (n m : Nat) := Fin n → Fin m
 
@@ -33,6 +49,14 @@ def Tm.rename (ρ : Ren n m) : Tm n → Tm m
 | .pi τ υ    => .pi (τ.rename ρ) (υ.rename ρ.lift)
 | .lam τ t   => .lam (τ.rename ρ) (t.rename ρ.lift)
 | .app t₁ t₂ => .app (t₁.rename ρ) (t₂.rename ρ)
+| .sigma τ υ => .sigma (τ.rename ρ) (υ.rename ρ.lift)
+| .pair a b  => .pair (a.rename ρ) (b.rename ρ)
+| .fst p     => .fst (p.rename ρ)
+| .snd p     => .snd (p.rename ρ)
+| .bool      => .bool
+| .true      => .true
+| .false     => .false
+| .boolrec P t f b => .boolrec (P.rename ρ.lift) (t.rename ρ) (f.rename ρ) (b.rename ρ)
 | .id τ a b  => .id (τ.rename ρ) (a.rename ρ) (b.rename ρ)
 | .refl τ a  => .refl (τ.rename ρ) (a.rename ρ)
 | .j c d p   => .j (c.rename ρ.lift.lift) (d.rename ρ) (p.rename ρ)
@@ -52,6 +76,14 @@ def Tm.subst (σ : Subst n m) : Tm n → Tm m
 | .pi τ υ    => .pi (τ.subst σ) (υ.subst σ.lift)
 | .lam τ t   => .lam (τ.subst σ) (t.subst σ.lift)
 | .app t₁ t₂ => .app (t₁.subst σ) (t₂.subst σ)
+| .sigma τ υ => .sigma (τ.subst σ) (υ.subst σ.lift)
+| .pair a b  => .pair (a.subst σ) (b.subst σ)
+| .fst p     => .fst (p.subst σ)
+| .snd p     => .snd (p.subst σ)
+| .bool      => .bool
+| .true      => .true
+| .false     => .false
+| .boolrec P t f b => .boolrec (P.subst σ.lift) (t.subst σ) (f.subst σ) (b.subst σ)
 | .id τ a b  => .id (τ.subst σ) (a.subst σ) (b.subst σ)
 | .refl τ a  => .refl (τ.subst σ) (a.subst σ)
 | .j c d p   => .j (c.subst σ.lift.lift) (d.subst σ) (p.subst σ)

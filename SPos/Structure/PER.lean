@@ -11,7 +11,6 @@ variable
   {S : Type v} (E : PER S)
   {M : D → Type w}
 
--- notation a "∈ₚ" R => PER.R R a a
 notation a "~" b "∈ₚ" R => PER.rel R a b
 
 @[simp]
@@ -32,13 +31,13 @@ theorem PER.refl_right (h : a ~ b ∈ₚ R) : b ~ b ∈ₚ R :=
 
 def PER.empty (D : Type u) : PER D where
   rel _ _ := False
-  sym := ⟨ fun _ _   f   => f ⟩
-  tra := ⟨ fun _ _ _ f _ => f ⟩
+  sym := by constructor; simp
+  tra := by constructor; simp
 
 def PER.diag (D : Type u) : PER D where
   rel a b := a = b
-  sym := ⟨ fun _ _   f   => f.symm ⟩
-  tra := ⟨ fun _ _ _ f g => f.trans g ⟩
+  sym := by constructor; simp
+  tra := by constructor; simp
 
 structure PERResp (R : PER D) (E : (x : D) → PER (M x)) where
   toFun : (x : D) → M x
@@ -51,7 +50,7 @@ abbrev PERRespND (R : PER D) (E : PER S) := PERResp R (fun _ => E)
 def PERRespND.mk (toFun : D → S) (resp : ∀ a b, (a ~ b ∈ₚ R) → (toFun a) ~ (toFun b) ∈ₚ E) :
   PERRespND R E where
   toFun := toFun
-  respCarrier := fun _ _ _ => rfl
+  respCarrier := by intros; simp
   respRelation := resp
 
 instance {R : PER D} {E : (d : D) → PER (M d)}
@@ -66,36 +65,15 @@ instance {R : PER D} {E : (d : D) → PER (M d)}
 infixr:25 " →ₚ " => PERRespND
 
 @[simp]
-theorem PERRespND.mk_apply {R : PER D} {E : PER S} (f : D → S)
+theorem PERRespND.mk_apply (f : D → S)
     (resp : ∀ a b, (a ~ b ∈ₚ R) → (f a) ~ (f b) ∈ₚ E) (a : D) :
     (PERRespND.mk R E f resp) a = f a := rfl
 
-/-- Two PERs with the same relation are equal. -/
 @[ext]
 theorem PER.ext {R S : PER D} (h : R.rel = S.rel) : R = S := by
-  cases R; cases S; cases h; rfl
+  cases R; cases S; cases h; simp
 
-/-- A family into the discrete PER is constant on equivalence classes. -/
+@[simp]
 theorem PERResp.eq_of_rel {A : PER D} (B : A →ₚ PER.diag S)
     {a b : D} (h : a ~ b ∈ₚ A) : B a = B b :=
   B.respRelation a b h
-
-/-- A partial equivalence relation: symmetric and transitive, but not necessarily
-reflexive. Its domain is `{a | R a a}`; on the domain it is an equivalence. -/
-structure IsPER {D : Type u} (R : D → D → Prop) : Prop where
-  symm  : ∀ {a b : D}, R a b → R b a
-  trans : ∀ {a b c : D}, R a b → R b c → R a c
-
-namespace IsPER
-
-variable {D : Type u} {R : D → D → Prop}
-
-/-- Anything related is in the domain (self-related), on the left. -/
-theorem refl_left (h : IsPER R) {a b : D} (hab : R a b) : R a a :=
-  h.trans hab (h.symm hab)
-
-/-- Anything related is in the domain (self-related), on the right. -/
-theorem refl_right (h : IsPER R) {a b : D} (hab : R a b) : R b b :=
-  h.trans (h.symm hab) hab
-
-end IsPER

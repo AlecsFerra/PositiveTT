@@ -33,13 +33,12 @@ theorem Tm.eval_rename (t : Tm n) (r : Ren n m) (ρ : DEnv m)
   induction t generalizing m
   all_goals simp_all [Tm.rename]
 
-/-- Weakening a term makes it ignore the newest variable. -/
 @[simp]
 theorem Tm.eval_weaken (t : Tm n) (ρ : DEnv n) (d : D) :
-    ⟦ t.weaken ⟧𝒄 (ρ ∷ d) = ⟦ t ⟧𝒄 ρ := by simp [Tm.weaken]
+    ⟦ (↑ t : Tm (n + 1)) ⟧𝒄 (ρ ∷ d) = ⟦ t ⟧𝒄 ρ := by simp [Tm.weaken]
 
 @[simp]
-def Subst.eval (σ : Subst n m) (ρ : DEnv m) : DEnv n :=
+noncomputable def Subst.eval (σ : Subst n m) (ρ : DEnv m) : DEnv n :=
   fun i => ⟦ σ i.rev ⟧𝒄 ρ
 
 @[simp]
@@ -61,8 +60,7 @@ theorem Subst.eval_single (u : Tm n) (ρ : DEnv n) :
 @[simp]
 theorem Tm.eval_subst (t : Tm n) (σ : Subst n m) (ρ : DEnv m)
   : ⟦ t.subst σ ⟧𝒄 ρ = ⟦ t ⟧𝒄 (σ.eval ρ) := by
-  induction t generalizing m
-  all_goals simp_all [Tm.subst]
+  induction t generalizing m <;> simp_all [Tm.subst]
 
 @[simp]
 theorem Tm.eval_subst1 (t : Tm (n + 1)) (u : Tm n) (ρ : DEnv n) :

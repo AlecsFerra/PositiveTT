@@ -35,6 +35,4 @@ lemma Env.cons_cont [OmegaCompletePartialOrder E] [OmegaCompletePartialOrder D]
     {g : E → Env (fun _ => D) n}
     (hg : ωScottContinuous g) (hv : ωScottContinuous v) (i : Fin (n + 1)) :
     ωScottContinuous fun e => (g e ∷ v e) i := by
-  induction i using Fin.lastCases with
-  | last   => simpa [Env.cons] using hv
-  | cast j => simpa [Env.cons] using hg.apply₂ j
+  induction i using Fin.lastCases <;> simp_all [Env.cons, hg.apply₂ _]

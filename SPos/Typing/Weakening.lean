@@ -49,6 +49,54 @@ theorem DefEq.rename (heq : Γ ⊢ t ≡ t' ∶ τ) (hΔ : ⊢ Δ) (hr : Ren.Wel
       simp [Tm.rename]
       rw [h0]
       exact DefEq.lamη (DefEq.rename ht hΔ hr)
+  | .sigma hτ hυ =>
+      have hτ' := DefEq.rename hτ hΔ hr
+      .sigma hτ' (DefEq.rename hυ (hΔ.cons hτ'.wf_left) hr.lift)
+  | .pair hτ hυ ha hb => by
+      have hτ' := DefEq.rename hτ hΔ hr
+      have hΔτ := hΔ.cons hτ'
+      have hb' := DefEq.rename hb hΔ hr
+      simp only [Tm.subst1_rename] at hb'
+      exact DefEq.pair hτ' (DefEq.rename hυ hΔτ hr.lift) (DefEq.rename ha hΔ hr) hb'
+  | .fst hp => .fst (DefEq.rename hp hΔ hr)
+  | .snd hp => by
+      have hp' := DefEq.rename hp hΔ hr
+      simp only [Tm.subst1_rename]
+      exact DefEq.snd hp'
+  | .fstβ hτ hυ ha hb => by
+      have hτ' := DefEq.rename hτ hΔ hr
+      have hΔτ := hΔ.cons hτ'
+      have hb' := DefEq.rename hb hΔ hr
+      simp only [Tm.subst1_rename] at hb'
+      exact DefEq.fstβ hτ' (DefEq.rename hυ hΔτ hr.lift) (DefEq.rename ha hΔ hr) hb'
+  | .sndβ hτ hυ ha hb => by
+      have hτ' := DefEq.rename hτ hΔ hr
+      have hΔτ := hΔ.cons hτ'
+      have hb' := DefEq.rename hb hΔ hr
+      simp only [Tm.subst1_rename] at hb' ⊢
+      exact DefEq.sndβ hτ' (DefEq.rename hυ hΔτ hr.lift) (DefEq.rename ha hΔ hr) hb'
+  | .pairη hp => .pairη (DefEq.rename hp hΔ hr)
+  | .bool _ => .bool hΔ
+  | .true _ => .true hΔ
+  | .false _ => .false hΔ
+  | .boolrec hP ht hf hb => by
+      have hP' := DefEq.rename hP (hΔ.cons (DefEq.bool hΔ)) hr.lift
+      have ht' := DefEq.rename ht hΔ hr
+      have hf' := DefEq.rename hf hΔ hr
+      simp only [Tm.subst1_rename] at ht' hf' ⊢
+      exact DefEq.boolrec hP' ht' hf' (DefEq.rename hb hΔ hr)
+  | .boolβt hP ht hf => by
+      have hP' := DefEq.rename hP (hΔ.cons (DefEq.bool hΔ)) hr.lift
+      have ht' := DefEq.rename ht hΔ hr
+      have hf' := DefEq.rename hf hΔ hr
+      simp only [Tm.subst1_rename] at ht' hf' ⊢
+      exact DefEq.boolβt hP' ht' hf'
+  | .boolβf hP ht hf => by
+      have hP' := DefEq.rename hP (hΔ.cons (DefEq.bool hΔ)) hr.lift
+      have ht' := DefEq.rename ht hΔ hr
+      have hf' := DefEq.rename hf hΔ hr
+      simp only [Tm.subst1_rename] at ht' hf' ⊢
+      exact DefEq.boolβf hP' ht' hf'
   | .id hτeq haeq hbeq =>
       .id (DefEq.rename hτeq hΔ hr) (DefEq.rename haeq hΔ hr) (DefEq.rename hbeq hΔ hr)
   | .refl hτeq haeq => .refl (DefEq.rename hτeq hΔ hr) (DefEq.rename haeq hΔ hr)

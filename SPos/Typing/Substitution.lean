@@ -49,6 +49,58 @@ theorem DefEq.subst (heq : Γ ⊢ t₁ ≡ t₂ ∶ τ) (hΔ : ⊢ Δ) (hσ : Su
       simp [Tm.subst]
       rw [Tm.weaken_subst, h0]
       exact DefEq.lamη (DefEq.subst ht hΔ hσ)
+  | .sigma hτ hυ =>
+      let hτ' := DefEq.subst hτ hΔ hσ
+      let hΔτ := hΔ.cons hτ'.wf_left
+      .sigma hτ' (DefEq.subst hυ hΔτ (hσ.lift hΔτ))
+  | .pair hτ hυ ha hb => by
+      have hτ' := DefEq.subst hτ hΔ hσ
+      have hΔτ := hΔ.cons hτ'
+      have hb' := DefEq.subst hb hΔ hσ
+      simp only [Tm.subst1_subst] at hb'
+      exact DefEq.pair hτ' (DefEq.subst hυ hΔτ (hσ.lift hΔτ)) (DefEq.subst ha hΔ hσ) hb'
+  | .fst hp => .fst (DefEq.subst hp hΔ hσ)
+  | .snd hp => by
+      have hp' := DefEq.subst hp hΔ hσ
+      simp only [Tm.subst1_subst]
+      exact DefEq.snd hp'
+  | .fstβ hτ hυ ha hb => by
+      have hτ' := DefEq.subst hτ hΔ hσ
+      have hΔτ := hΔ.cons hτ'
+      have hb' := DefEq.subst hb hΔ hσ
+      simp only [Tm.subst1_subst] at hb'
+      exact DefEq.fstβ hτ' (DefEq.subst hυ hΔτ (hσ.lift hΔτ)) (DefEq.subst ha hΔ hσ) hb'
+  | .sndβ hτ hυ ha hb => by
+      have hτ' := DefEq.subst hτ hΔ hσ
+      have hΔτ := hΔ.cons hτ'
+      have hb' := DefEq.subst hb hΔ hσ
+      simp only [Tm.subst1_subst] at hb' ⊢
+      exact DefEq.sndβ hτ' (DefEq.subst hυ hΔτ (hσ.lift hΔτ)) (DefEq.subst ha hΔ hσ) hb'
+  | .pairη hp => .pairη (DefEq.subst hp hΔ hσ)
+  | .bool _ => .bool hΔ
+  | .true _ => .true hΔ
+  | .false _ => .false hΔ
+  | .boolrec hP ht hf hb => by
+      have hΔbool := hΔ.cons (DefEq.bool hΔ)
+      have hP' := DefEq.subst hP hΔbool (hσ.lift (τ := Tm.bool) hΔbool)
+      have ht' := DefEq.subst ht hΔ hσ
+      have hf' := DefEq.subst hf hΔ hσ
+      simp only [Tm.subst1_subst] at ht' hf' ⊢
+      exact DefEq.boolrec hP' ht' hf' (DefEq.subst hb hΔ hσ)
+  | .boolβt hP ht hf => by
+      have hΔbool := hΔ.cons (DefEq.bool hΔ)
+      have hP' := DefEq.subst hP hΔbool (hσ.lift (τ := Tm.bool) hΔbool)
+      have ht' := DefEq.subst ht hΔ hσ
+      have hf' := DefEq.subst hf hΔ hσ
+      simp only [Tm.subst1_subst] at ht' hf' ⊢
+      exact DefEq.boolβt hP' ht' hf'
+  | .boolβf hP ht hf => by
+      have hΔbool := hΔ.cons (DefEq.bool hΔ)
+      have hP' := DefEq.subst hP hΔbool (hσ.lift (τ := Tm.bool) hΔbool)
+      have ht' := DefEq.subst ht hΔ hσ
+      have hf' := DefEq.subst hf hΔ hσ
+      simp only [Tm.subst1_subst] at ht' hf' ⊢
+      exact DefEq.boolβf hP' ht' hf'
   | .id hτeq haeq hbeq =>
       .id (DefEq.subst hτeq hΔ hσ) (DefEq.subst haeq hΔ hσ) (DefEq.subst hbeq hΔ hσ)
   | .refl hτeq haeq => .refl (DefEq.subst hτeq hΔ hσ) (DefEq.subst haeq hΔ hσ)

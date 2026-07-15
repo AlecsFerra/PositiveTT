@@ -21,7 +21,9 @@ class ScottDomain (D : Type u) (F : outParam (Type v))
   -- different kind yields bottom.
   flat_pair : ∀ p, flat.ret (pair.inj p) = ⊥
   pair_flat : ∀ x, pair.ret (flat.inj x) = ⊥
+
 attribute [simp] ScottDomain.flat_pair ScottDomain.pair_flat
+
 open ScottDomain
 
 @[simp]
@@ -51,9 +53,7 @@ notation "inj→" => ScottDomain.mk_lam
 
 @[simp]
 theorem ScottDomain.flat_ret_bot [ScottDomain D F] : flat.ret (⊥ : D) = ⊥ := by
-  have h : flat.ret (⊥ : D) ≤ Flat.bot := by
-    have := flat.ret.monotone (bot_le : (⊥ : D) ≤ flat.inj .bot)
-    rwa [flat.ret_inj] at this
-  cases hx : flat.ret (⊥ : D) with
-  | bot   => rfl
-  | val v => rw [hx] at h; cases h
+  cases hp : flat.ret (⊥ : D)
+  · rfl
+  · simpa [flat.ret_inj, hp, LE.le]
+    using flat.ret.monotone (a := ⊥) (b := flat.inj (D := D) ⊥)

@@ -16,11 +16,19 @@ set_option hygiene false
 notation:max "⟦" t "⟧𝒄 " => Tm.eval t
 
 @[simp]
-def Tm.eval : Tm n → (DEnv n) →𝒄 D
+noncomputable def Tm.eval : Tm n → (DEnv n) →𝒄 D
 | .var i   => ƛ[ by fun_prop ] ρ ↦ ρ.get i
 | .pi τ υ  => ƛ[ by fun_prop ] ρ ↦ Π̂ (⟦ τ ⟧𝒄 ρ) (ƛ[ by fun_prop ] d ↦ ⟦ υ ⟧𝒄 (ρ ∷ d))
 | .lam _ t => ƛ[ by fun_prop ] ρ ↦ inj→ (ƛ[ by fun_prop ] d ↦ ⟦ t ⟧𝒄 (ρ ∷ d))
 | .app t s => ƛ[ by fun_prop ] ρ ↦ ⟦ t ⟧𝒄 ρ •𝒄 ⟦ s ⟧𝒄 ρ
+| .sigma τ υ => ƛ[ by fun_prop ] ρ ↦ Σ̂ (⟦ τ ⟧𝒄 ρ) (ƛ[ by fun_prop ] d ↦ ⟦ υ ⟧𝒄 (ρ ∷ d))
+| .pair a b => ƛ[ by fun_prop ] ρ ↦ mkPair (⟦ a ⟧𝒄 ρ) (⟦ b ⟧𝒄 ρ)
+| .fst p => ƛ[ by fun_prop ] ρ ↦ proj₁ (⟦ p ⟧𝒄 ρ)
+| .snd p => ƛ[ by fun_prop ] ρ ↦ proj₂ (⟦ p ⟧𝒄 ρ)
+| .bool => ƛ[ by fun_prop ] _ ↦ mkBool
+| .true => ƛ[ by fun_prop ] _ ↦ mkTrue
+| .false => ƛ[ by fun_prop ] _ ↦ mkFalse
+| .boolrec _ t f b => ƛ[ by fun_prop ] ρ ↦ boolCaseHom (⟦ t ⟧𝒄 ρ) (⟦ f ⟧𝒄 ρ) (⟦ b ⟧𝒄 ρ)
 | .id τ a b => ƛ[ by fun_prop ] ρ ↦ Îd (⟦ τ ⟧𝒄 ρ) (⟦ a ⟧𝒄 ρ) (⟦ b ⟧𝒄 ρ)
 | .refl _ _ => ƛ[ by fun_prop ] _ ↦ mkRefl
 | .j _ d _ => ⟦ d ⟧𝒄
@@ -30,4 +38,4 @@ end
 @[simp]
 theorem Tm.ap_lam_eval (τ : Tm n) (t : Tm (n + 1)) (ρ : DEnv n) (d : D) :
     ⟦ ƛ τ t ⟧𝒄 ρ •𝒄 d = ⟦ t ⟧𝒄 (ρ ∷ d) := by
-  simp [Tm.eval, ScottDomain.lam.ret_inj]
+  simp [ScottDomain.lam.ret_inj]

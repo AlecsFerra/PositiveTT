@@ -206,6 +206,196 @@ theorem DefEq.sound {Γ : Ctx n} {t t' τ : Tm n} (ht : Γ ⊢ t ≡ t' ∶ τ) 
     have : ⟦ Tm.app t.weaken (Tm.var (0 : Fin (n + 1))) ⟧𝒄 (ρ' ∷ x) = ⟦ t ⟧𝒄 ρ' •𝒄 x := by
       simp [Tm.eval]
     simpa [ScottDomain.lam.ret_inj, this] using hElt x y hxy
+  | .sigma (τ₁ := τ) (υ₁ := υ) (υ₂ := υ') (ℓ₁ := ℓ₁) (ℓ₂ := ℓ₂) hτ hυ => by
+    obtain ⟨_, _, _, hk₂, hrelτ⟩ := DefEq.sound hτ hρ
+    simp [Tm.eval, mk_lam_apply] at hk₂
+    obtain ⟨-, -, rfl⟩ := decode_univ_inv hk₂
+    obtain ⟨A, hA'⟩ := mem_U.mp hrelτ
+    obtain ⟨_, _, _, hk₃, hrelτ'⟩ := DefEq.sound hτ (Models.refl_left hρ.symm)
+    simp [Tm.eval, mk_lam_apply] at hk₃
+    obtain ⟨-, -, rfl⟩ := decode_univ_inv hk₃
+    obtain ⟨A₂, hA₂⟩ := mem_U.mp hrelτ'
+    have hA : Decode ℓ₁ (⟦ τ ⟧𝒄 ρ) (⟦ τ ⟧𝒄 ρ') A := hA'.trans hA₂.symm
+    have hB : ∀ {d d' : D}, (d ~ d' ∈ₚ A) →
+        Decode ℓ₂ (⟦ υ ⟧𝒄 (ρ ∷ d)) (⟦ υ' ⟧𝒄 (ρ' ∷ d')) (El ℓ₂ (⟦ υ ⟧𝒄 (ρ ∷ d))) := by
+      intro d d' hdd'
+      obtain ⟨_, _, _, hk', hmemυ⟩ := DefEq.sound hυ (hρ.cons hA hdd')
+      simp [Tm.eval, mk_lam_apply] at hk'
+      obtain ⟨-, -, rfl⟩ := decode_univ_inv hk'
+      exact Decode.el hmemυ
+    have hcoh : ∀ (d d' : D), (d ~ d' ∈ₚ A) →
+        El ℓ₂ (⟦ υ ⟧𝒄 (ρ ∷ d)) = El ℓ₂ (⟦ υ ⟧𝒄 (ρ ∷ d')) := by
+      intro d d' hdd'
+      obtain ⟨_, _, _, hk', hmemυ⟩ :=
+        DefEq.sound hυ (Models.cons hρ.refl_left hA.refl_left hdd')
+      simp [Tm.eval, mk_lam_apply] at hk'
+      obtain ⟨-, -, rfl⟩ := decode_univ_inv hk'
+      obtain ⟨Y, hY⟩ := mem_U.mp hmemυ
+      obtain ⟨_, _, _, hk'', hmemυ'⟩ :=
+        DefEq.sound hυ (Models.cons hρ.refl_left hA.refl_left (PER.refl_right A hdd'))
+      simp [Tm.eval, mk_lam_apply] at hk''
+      obtain ⟨-, -, rfl⟩ := decode_univ_inv hk''
+      obtain ⟨Z, hZ⟩ := mem_U.mp hmemυ'
+      rw [El_eq_of_decode (hY.trans hZ.symm), El_eq_of_decode (hY.trans hZ.symm).symm]
+    have hsig := Decode.sigma
+      (f := ƛ[ by fun_prop ] d ↦ ⟦ υ ⟧𝒄 (ρ ∷ d)) (f' := ƛ[ by fun_prop ] d ↦ ⟦ υ' ⟧𝒄 (ρ' ∷ d))
+      (B := PERRespND.mk A (PER.diag (PER D)) (fun d => El ℓ₂ (⟦ υ ⟧𝒄 (ρ ∷ d))) hcoh)
+      (hA'.cumul (le_max_left ℓ₁ ℓ₂))
+      (fun {d d'} hdd' => by simpa using (hB hdd').cumul (le_max_right ℓ₁ ℓ₂))
+    have hu : Decode (max ℓ₁ ℓ₂ + 1) (mkU (max ℓ₁ ℓ₂) : D) (mkU (max ℓ₁ ℓ₂)) (U (max ℓ₁ ℓ₂)) :=
+      Decode.univ (by omega)
+    exact ⟨max ℓ₁ ℓ₂ + 1, mem_U.mpr ⟨_, by simpa [Tm.eval] using hu⟩, _,
+      by simpa [Tm.eval] using hu, mem_U.mpr ⟨_, by simpa [Tm.eval] using hsig⟩⟩
+  | .pair (τ := τ) (υ := υ) (a₁ := a₁) (b₁ := b₁) (ℓ := ℓ₁) (ℓ' := ℓ₂) hτ hυ ha hb => by
+    obtain ⟨_, _, _, hk₂, hrelτ⟩ := DefEq.sound hτ hρ
+    simp [Tm.eval, mk_lam_apply] at hk₂
+    obtain ⟨-, -, rfl⟩ := decode_univ_inv hk₂
+    obtain ⟨A, hA'⟩ := mem_U.mp hrelτ
+    obtain ⟨_, _, _, hk₃, hrelτ'⟩ := DefEq.sound hτ (Models.refl_left hρ.symm)
+    simp [Tm.eval, mk_lam_apply] at hk₃
+    obtain ⟨-, -, rfl⟩ := decode_univ_inv hk₃
+    obtain ⟨A₂, hA₂⟩ := mem_U.mp hrelτ'
+    have hA : Decode ℓ₁ (⟦ τ ⟧𝒄 ρ) (⟦ τ ⟧𝒄 ρ') A := hA'.trans hA₂.symm
+    have hB : ∀ {d d' : D}, (d ~ d' ∈ₚ A) →
+        Decode ℓ₂ (⟦ υ ⟧𝒄 (ρ ∷ d)) (⟦ υ ⟧𝒄 (ρ' ∷ d')) (El ℓ₂ (⟦ υ ⟧𝒄 (ρ ∷ d))) := by
+      intro d d' hdd'
+      obtain ⟨_, _, _, hk', hmemυ⟩ := DefEq.sound hυ (hρ.cons hA hdd')
+      simp [Tm.eval, mk_lam_apply] at hk'
+      obtain ⟨-, -, rfl⟩ := decode_univ_inv hk'
+      exact Decode.el hmemυ
+    have hcoh : ∀ (d d' : D), (d ~ d' ∈ₚ A) →
+        El ℓ₂ (⟦ υ ⟧𝒄 (ρ ∷ d)) = El ℓ₂ (⟦ υ ⟧𝒄 (ρ ∷ d')) := by
+      intro d d' hdd'
+      obtain ⟨_, _, _, hk', hmemυ⟩ :=
+        DefEq.sound hυ (Models.cons hρ.refl_left hA.refl_left hdd')
+      simp [Tm.eval, mk_lam_apply] at hk'
+      obtain ⟨-, -, rfl⟩ := decode_univ_inv hk'
+      obtain ⟨Y, hY⟩ := mem_U.mp hmemυ
+      obtain ⟨_, _, _, hk'', hmemυ'⟩ :=
+        DefEq.sound hυ (Models.cons hρ.refl_left hA.refl_left (PER.refl_right A hdd'))
+      simp [Tm.eval, mk_lam_apply] at hk''
+      obtain ⟨-, -, rfl⟩ := decode_univ_inv hk''
+      obtain ⟨Z, hZ⟩ := mem_U.mp hmemυ'
+      rw [El_eq_of_decode (hY.trans hZ.symm), El_eq_of_decode (hY.trans hZ.symm).symm]
+    have hsig := Decode.sigma
+      (f := ƛ[ by fun_prop ] d ↦ ⟦ υ ⟧𝒄 (ρ ∷ d)) (f' := ƛ[ by fun_prop ] d ↦ ⟦ υ ⟧𝒄 (ρ' ∷ d))
+      (B := PERRespND.mk A (PER.diag (PER D)) (fun d => El ℓ₂ (⟦ υ ⟧𝒄 (ρ ∷ d))) hcoh)
+      (hA'.cumul (le_max_left ℓ₁ ℓ₂))
+      (fun {d d'} hdd' => by simpa using (hB hdd').cumul (le_max_right ℓ₁ ℓ₂))
+    obtain ⟨_, _, _, hka, hmema⟩ := DefEq.sound ha hρ
+    rw [hka.det hA] at hmema
+    obtain ⟨_, _, _, hkb, hmemb⟩ := DefEq.sound hb hρ
+    rw [hkb.det (by simpa [Tm.eval_subst1, mk_lam_apply] using hB hmema)] at hmemb
+    refine ⟨max ℓ₁ ℓ₂, mem_U.mpr ⟨_, by simpa [Tm.eval] using hsig⟩, _,
+      by simpa [Tm.eval] using hsig.refl_left, ?_⟩
+    simp only [Tm.eval, mk_lam_apply]
+    exact ⟨⟦ a₁ ⟧𝒄 ρ, ⟦ b₁ ⟧𝒄 ρ, _, _, rfl, rfl, hmema, hmemb⟩
+  | .fst (τ := τ) hp => by
+    obtain ⟨_, hU, hElp⟩ := DefEq.sound hp hρ
+    obtain ⟨X, hk⟩ := mem_U.mp hU
+    rw [El_eq_of_decode hk] at hElp
+    have hk' := hk
+    simp only [Tm.eval, mk_lam_apply] at hk'
+    obtain ⟨a', f', A, B, hc', hA, hB, rfl⟩ := decode_sigma_inv hk'
+    obtain ⟨rfl, rfl⟩ := mkSigma_inj hc'
+    obtain ⟨a, b, a2, b2, hp1, hp2, hab, _⟩ := hElp
+    refine ⟨_, mem_U.mpr ⟨A, hA⟩, _, hA.refl_left, ?_⟩
+    simp only [Tm.eval, mk_lam_apply, hp1, hp2, proj₁_mkPair]
+    exact hab
+  | .snd (τ := τ) (υ := υ) (p₁ := p₁) (p₂ := p₂) hp => by
+    obtain ⟨k, hU, hElp⟩ := DefEq.sound hp hρ
+    obtain ⟨X, hk⟩ := mem_U.mp hU
+    rw [El_eq_of_decode hk] at hElp
+    have hk' := hk
+    simp only [Tm.eval, mk_lam_apply] at hk'
+    obtain ⟨a', f', A, B, hc', hA, hB, rfl⟩ := decode_sigma_inv hk'
+    obtain ⟨rfl, rfl⟩ := mkSigma_inj hc'
+    obtain ⟨a, b, a2, b2, hp1, hp2, hab, hbb⟩ := hElp
+    -- diagonal at ρ' relates `proj₁⟦p₁⟧ρ` and `proj₁⟦p₁⟧ρ'` in `A`
+    obtain ⟨_, hU2, hElp2⟩ := DefEq.sound hp (Models.refl_left hρ.symm)
+    obtain ⟨X2, hk2⟩ := mem_U.mp hU2
+    rw [El_eq_of_decode hk2] at hElp2
+    have hk2' := hk2
+    simp only [Tm.eval, mk_lam_apply] at hk2'
+    obtain ⟨a'', f'', A2, B2, hc2', hA2, hB2, rfl⟩ := decode_sigma_inv hk2'
+    obtain ⟨rfl, rfl⟩ := mkSigma_inj hc2'
+    obtain ⟨a1', b1', a2', b2', hp1', hp2', hab', hbb'⟩ := hElp2
+    obtain rfl := hA.symm.refl_left.det hA2
+    obtain ⟨rfl, rfl⟩ := mkPair_inj (hp2.symm.trans hp2')
+    have hproj : a ~ a1' ∈ₚ A := A.trans hab (A.symm hab')
+    have hd : Decode k (⟦ υ [/ pr₁ p₁ ] ⟧𝒄 ρ) (⟦ υ [/ pr₁ p₁ ] ⟧𝒄 ρ') (B a) := by
+      simpa [Tm.eval_subst1, Tm.eval, mk_lam_apply, hp1, hp1', proj₁_mkPair] using hB hproj
+    refine ⟨_, mem_U.mpr ⟨_, hd⟩, _, hd.refl_left, ?_⟩
+    simp only [Tm.eval, mk_lam_apply, hp1, hp2, proj₂_mkPair]
+    exact hbb
+  | .fstβ hτ hυ ha hb => by
+    obtain ⟨ℓ, hU, hEl⟩ := DefEq.sound ha hρ
+    exact ⟨ℓ, hU, by simpa [Tm.eval, proj₁_mkPair] using hEl⟩
+  | .sndβ hτ hυ ha hb => by
+    obtain ⟨ℓ, hU, hEl⟩ := DefEq.sound hb hρ
+    exact ⟨ℓ, hU, by simpa [Tm.eval, proj₂_mkPair] using hEl⟩
+  | .pairη hp => by
+    -- `PER.sigma` only relates literal `mkPair`s, so `p` denotes a pair and
+    -- `⸨pr₁ p, pr₂ p⸩` re-assembles it on the nose.
+    obtain ⟨_, hU, hElp⟩ := DefEq.sound hp hρ
+    obtain ⟨X, hX⟩ := mem_U.mp hU
+    rw [El_eq_of_decode hX] at hElp
+    have hX' := hX
+    simp only [Tm.eval, mk_lam_apply] at hX'
+    obtain ⟨a', f', A, B, hc', hA, hB, rfl⟩ := decode_sigma_inv hX'
+    obtain ⟨rfl, rfl⟩ := mkSigma_inj hc'
+    obtain ⟨a, b, a2, b2, hp1, hp2, hab, hbb⟩ := hElp
+    refine ⟨_, hU, _, hX.refl_left, ?_⟩
+    simp only [Tm.eval, mk_lam_apply, hp1, hp2, proj₁_mkPair, proj₂_mkPair]
+    exact ⟨a, b, a2, b2, rfl, rfl, hab, hbb⟩
+  | .bool _ => by
+    have hu : Decode 1 (mkU 0 : D) (mkU 0) (U 0) := Decode.univ (by omega)
+    exact ⟨1, mem_U.mpr ⟨_, by simpa [Tm.eval] using hu⟩, _, by simpa [Tm.eval] using hu,
+      mem_U.mpr ⟨PER.bool, by simpa [Tm.eval] using Decode.bool (D := D) (k := 0)⟩⟩
+  | .true _ => by
+    have hb : Decode 0 (mkBool : D) mkBool PER.bool := Decode.bool
+    refine ⟨0, mem_U.mpr ⟨_, by simpa [Tm.eval] using hb⟩, _, by simpa [Tm.eval] using hb, ?_⟩
+    simp only [Tm.eval]
+    exact Or.inl ⟨rfl, rfl⟩
+  | .false _ => by
+    have hb : Decode 0 (mkBool : D) mkBool PER.bool := Decode.bool
+    refine ⟨0, mem_U.mpr ⟨_, by simpa [Tm.eval] using hb⟩, _, by simpa [Tm.eval] using hb, ?_⟩
+    simp only [Tm.eval]
+    exact Or.inr ⟨rfl, rfl⟩
+  | .boolrec (P₁ := P) (b₁ := b₁) hP ht hf hb => by
+    obtain ⟨_, hUb, hbmem⟩ := DefEq.sound hb hρ
+    obtain ⟨Xb, hkb⟩ := mem_U.mp hUb
+    rw [El_eq_of_decode hkb] at hbmem
+    have hkb2 := hkb; simp only [Tm.eval] at hkb2
+    obtain ⟨_, rfl⟩ := decode_bool_inv hkb2
+    obtain ⟨_, hUb', hbmem'⟩ := DefEq.sound hb (Models.refl_left hρ.symm)
+    obtain ⟨Xb', hkb'⟩ := mem_U.mp hUb'
+    rw [El_eq_of_decode hkb'] at hbmem'
+    have hkb2' := hkb'; simp only [Tm.eval] at hkb2'
+    obtain ⟨_, rfl⟩ := decode_bool_inv hkb2'
+    rcases hbmem with ⟨hbρ, hbρ'⟩ | ⟨hbρ, hbρ'⟩
+    · have hb1ρ' : ⟦ b₁ ⟧𝒄 ρ' = mkTrue := by
+        rcases hbmem' with ⟨h, _⟩ | ⟨_, h⟩
+        · exact h
+        · exact absurd (hbρ'.symm.trans h) mkTrue_ne_mkFalse
+      obtain ⟨ℓ, hUt, hElt⟩ := DefEq.sound ht hρ
+      refine ⟨ℓ, ?_, ?_⟩
+      · simpa [Tm.eval_subst1, Tm.eval, hbρ, hb1ρ'] using hUt
+      · simpa [Tm.eval, boolCaseHom_apply, hbρ, hbρ', boolCase_mkTrue, Tm.eval_subst1] using hElt
+    · have hb1ρ' : ⟦ b₁ ⟧𝒄 ρ' = mkFalse := by
+        rcases hbmem' with ⟨_, h⟩ | ⟨h, _⟩
+        · exact absurd (h.symm.trans hbρ') mkTrue_ne_mkFalse
+        · exact h
+      obtain ⟨ℓ, hUf, hElf⟩ := DefEq.sound hf hρ
+      refine ⟨ℓ, ?_, ?_⟩
+      · simpa [Tm.eval_subst1, Tm.eval, hbρ, hb1ρ'] using hUf
+      · simpa [Tm.eval, boolCaseHom_apply, hbρ, hbρ', boolCase_mkFalse, Tm.eval_subst1] using hElf
+  | .boolβt hP ht hf => by
+    obtain ⟨ℓ, hU, hEl⟩ := DefEq.sound ht hρ
+    exact ⟨ℓ, hU, by simpa [Tm.eval, boolCaseHom_apply, boolCase_mkTrue] using hEl⟩
+  | .boolβf hP ht hf => by
+    obtain ⟨ℓ, hU, hEl⟩ := DefEq.sound hf hρ
+    exact ⟨ℓ, hU, by simpa [Tm.eval, boolCaseHom_apply, boolCase_mkFalse] using hEl⟩
   | .id (ℓ := ℓ) hτeq haeq hbeq => by
     obtain ⟨_, _, _, hk₂, hrelτ⟩ := DefEq.sound hτeq hρ
     simp [Tm.eval, mk_lam_apply] at hk₂
