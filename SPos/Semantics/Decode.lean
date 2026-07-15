@@ -162,14 +162,15 @@ def Decode (k : Nat) (c c' : D) (X : PER D) : Prop :=
 theorem Decode.symm {X : PER D} (h : Decode k c c' X) : Decode k c' c X :=
   DecodeAux.symm h
 
-theorem Decode.trans  {X Y : PER D} (h : Decode k c c' X) (h' : Decode k c' c'' Y)
-  : Decode k c c'' X := DecodeAux.trans h h'
+theorem Decode.trans  {X Y : PER D} (h : Decode k c c' X)
+  (h' : Decode k c' c'' Y) : Decode k c c'' X :=
+  DecodeAux.trans h h'
 
 theorem Decode.refl_left {X : PER D} (h : Decode k c c' X) : Decode k c c X :=
   h.trans h.symm
 
-theorem Decode.det {X Y : PER D} (h : Decode ℓ₁ c c₁ X) (h' : Decode ℓ₂ c c₂ Y) : X = Y :=
-  DecodeAux.det (by simp) h h'
+theorem Decode.det {X Y : PER D} (h : Decode ℓ₁ c c₁ X) (h' : Decode ℓ₂ c c₂ Y)
+  : X = Y := DecodeAux.det (by simp) h h'
 
 @[simp]
 theorem mem_U : (c ~ c' ∈ₚ U ℓ) ↔ ∃ X : PER D, Decode ℓ c c' X := by

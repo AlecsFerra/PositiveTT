@@ -110,8 +110,6 @@ theorem Tm.subst1_rename (t : Tm (n + 1)) (u : Tm n) (r : Ren n m) :
     (t [/ u]).rename r = t.rename r.lift [/u.rename r] := by
   simp [Tm.subst1, Ren.single_lift]
 
--- Substituting under the last binder and then instantiating it agrees with the
--- nested single substitutions `[/ ↑p ] [/ b ]` (both are the simultaneous [p, b]).
 theorem Tm.subst_lift_single (t : Tm (n + 2)) (b p : Tm n) :
     (t.subst (Subst.lift (Subst.single b))) [/ p ] = t [/ ↑ p ] [/ b ] := by
   simp only [Tm.subst1, Tm.subst_subst]
@@ -119,3 +117,7 @@ theorem Tm.subst_lift_single (t : Tm (n + 2)) (b p : Tm n) :
   induction i using Fin.cases <;>
     simp only [Subst.lift, Subst.single, Fin.cases_zero, Fin.cases_succ, Tm.subst,
       Tm.weaken, Tm.rename_subst, Tm.subst_var]
+
+theorem Tm.rename_eq_subst (t : Tm n) (r : Ren n m) :
+    t.rename r = t.subst (fun i => # (r i)) := by
+  induction t generalizing m <;> simp_all [Tm.rename, Tm.subst]
