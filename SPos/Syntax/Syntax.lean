@@ -13,7 +13,6 @@ inductive Tm : (n : Nat) → Type where
 | bool : Tm n
 | true : Tm n
 | false : Tm n
--- dependent recursor: motive (binds bool), true branch, false branch, scrutinee
 | boolrec : Tm (n + 1) → Tm n → Tm n → Tm n → Tm n
 -- Identity
 | id   : Tm n → Tm n → Tm n → Tm n

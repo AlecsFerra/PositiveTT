@@ -411,8 +411,6 @@ theorem DefEq.sound {Γ : Ctx n} {t t' τ : Tm n} (ht : Γ ⊢ t ≡ t' ∶ τ) 
     simp only [Tm.eval, mk_lam_apply]
     exact PER.refl_left A hmemaa
   | .j (τ := τ) (a := a) (b := b) (C₁ := C) (ℓ := ℓ) (p₁ := p) _ _ hCeq hdeq hpeq => by
-    -- semantic content of `p ≡ p' : Id τ a b` (also yields p's own coherence,
-    -- since `PER.id` only looks at the endpoints)
     obtain ⟨_, hUp, _, hkp, hmemp⟩ := DefEq.sound hpeq hρ
     have hpEl := Decode.el hUp
     simp only [Tm.eval, mk_lam_apply] at hpEl hkp
@@ -437,7 +435,6 @@ theorem DefEq.sound {Γ : Ctx n} {t t' τ : Tm n} (ht : Γ ⊢ t ≡ t' ∶ τ) 
     have hType : (⟦ C [/ ↑ p ] [/ b ] ⟧𝒄 ρ) ~ (⟦ C [/ ↑ p ] [/ b ] ⟧𝒄 ρ') ∈ₚ U ℓ := by
       simpa [Tm.eval_subst1, Tm.eval_weaken, Tm.eval] using hCC
     obtain ⟨Xres, hXres⟩ := mem_U.mp hType
-    -- El coherence: base environment vs result environment at ρ
     have hMod : (ρ ∷ ⟦ a ⟧𝒄 ρ ∷ mkRefl) ∼ (ρ ∷ ⟦ b ⟧𝒄 ρ ∷ ⟦ p ⟧𝒄 ρ)
         ⊨ (Γ ∷ τ ∷ Id (↑ τ) (↑ a) (# 0)) :=
       Models.cons (Models.cons hρ.refl_left hAτ.refl_left hab)
@@ -460,7 +457,6 @@ theorem DefEq.sound {Γ : Ctx n} {t t' τ : Tm n} (ht : Γ ⊢ t ≡ t' ∶ τ) 
     exact ⟨_, hType, Xres, hXres.refl_left, by simpa [Tm.eval] using hmemd⟩
   | .jβ _ _ _ _ hd => by simpa [Tm.eval] using DefEq.sound hd hρ
 
--- Typing is the diagonal, so this is just an instance of the fundamental theorem.
 theorem WfTm.sound {Γ : Ctx n} {t τ : Tm n} (ht : Γ ⊢ t ∶ τ) {ρ ρ' : DEnv n}
     (hρ : ρ ∼ ρ' ⊨ Γ) :
     ∃ ℓ, (⟦ τ ⟧𝒄 ρ ~ ⟦ τ ⟧𝒄 ρ' ∈ₚ U ℓ) ∧ (⟦ t ⟧𝒄 ρ ~ ⟦ t ⟧𝒄 ρ' ∈ₚ El ℓ (⟦ τ ⟧𝒄 ρ)) :=

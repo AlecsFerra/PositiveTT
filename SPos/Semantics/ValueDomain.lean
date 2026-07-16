@@ -13,6 +13,8 @@ inductive Label where
 | Id : Label
 | Refl : Label
 | Mu : Label
+| MuVar : Nat → Label
+deriving DecidableEq
 
 variable {D : Type u} [ScottDomain D Label]
 
@@ -75,6 +77,14 @@ def ScottDomain.unU (d : D) : Option Nat :=
   match flat.ret d with
   | .val (.U n) => some n
   | _           => none
+
+def ScottDomain.mkMuVar (n : Nat) : D :=
+  #𝒄 (.MuVar n)
+
+def ScottDomain.unMuVar (d : D) : Option Nat :=
+  match flat.ret d with
+  | .val (.MuVar n) => some n
+  | _               => none
 
 def ScottDomain.mkId : D →𝒄 D →𝒄 D →𝒄 D :=
   ƛ[ by fun_prop ] a ↦ ƛ[ by fun_prop ] x ↦ ƛ[ by fun_prop ] y ↦ (#𝒄 .Id ,𝒄 a ,𝒄 x ,𝒄 y)
