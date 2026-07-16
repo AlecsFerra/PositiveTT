@@ -37,6 +37,11 @@ notation "Id" => Tm.id
 notation "refl" => Tm.refl
 notation "J" => Tm.j
 
+notation "𝔹" => Tm.bool
+abbrev tt : Tm n := Tm.true
+abbrev ff : Tm n := Tm.false
+abbrev boolrec (P : Tm (n + 1)) (t f b : Tm n) : Tm n := Tm.boolrec P t f b
+
 prefix:(max - 1) "𝓤" => Tm.u
 
 def Ren (n m : Nat) := Fin n → Fin m
