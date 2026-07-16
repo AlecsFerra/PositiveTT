@@ -6,332 +6,318 @@ open OmegaCompletePartialOrder ScottDomain
 
 variable {D : Type u} [ScottDomain D Label]
 
-def DecodeEnv (D : Type u) (n : Nat) : Type u :=
-  Fin n → PER D
+inductive DecodeAux (k : Nat) (U' : ∀ ℓ, ℓ < k → PER D) : D → D → PER D → Prop where
+| univ (h : ℓ < k) : DecodeAux k U' (mkU ℓ) (mkU ℓ) (U' ℓ h)
+| pi : DecodeAux k U' a a' A
+    → (∀ {d d' : D}, (d ~ d' ∈ₚ A) → DecodeAux k U' (f d) (f' d') (B d))
+    → DecodeAux k U' (Π̂ a f) (Π̂ a' f') (PER.pi A B)
+| sigma : DecodeAux k U' a a' A
+       → (∀ {d d' : D}, (d ~ d' ∈ₚ A) → DecodeAux k U' (f d) (f' d') (B d))
+       → DecodeAux k U' (Σ̂ a f) (Σ̂ a' f') (PER.sigma A B)
+| bool : DecodeAux k U' mkBool mkBool PER.bool
+| id : DecodeAux k U' t t' A → (a ~ a' ∈ₚ A) → (b ~ b' ∈ₚ A)
+    → DecodeAux k U' (Îd t a b) (Îd t' a' b') (PER.id A a b)
 
-def DecodeEnv.empty : DecodeEnv D 0 := fun i => Fin.elim0 i
+-- Forded Decode
+inductive DecodeAux.Inv (k : Nat) (U' : ∀ ℓ, ℓ < k → PER D) (c c' : D) (X : PER D) : Prop where
+| univ (hℓ : ℓ < k) (_ : c = mkU ℓ) (_ : c' = mkU ℓ)
+           (_ : X = U' ℓ hℓ)
+| pi
+    (_ : c = Π̂ a f) (_ : c' = Π̂ a' f')
+    (_ : DecodeAux k U' a a' A)
+    (_ : ∀ {d d' : D}, (d ~ d' ∈ₚ A) → DecodeAux k U' (f d) (f' d') (B d))
+    (_ : X = PER.pi A B)
+| sigma
+    (_ : c = Σ̂ a f) (_ : c' = Σ̂ a' f')
+    (_ : DecodeAux k U' a a' A)
+    (_ : ∀ {d d' : D}, (d ~ d' ∈ₚ A) → DecodeAux k U' (f d) (f' d') (B d))
+    (_ : X = PER.sigma A B)
+| bool
+    (_ : c = mkBool) (_ : c' = mkBool)
+    (_ : X = PER.bool)
+| id
+    (_ : c = Îd t a b) (_ : c' = Îd t' a' b')
+    (_ : DecodeAux k U' t t' A)
+    (_ : a ~ a' ∈ₚ A) (_ : b ~ b' ∈ₚ A)
+    (_ : X = PER.id A a b)
 
-def DecodeEnv.cons {n : Nat} (ρ : DecodeEnv D n) (X : PER D)
-  : DecodeEnv D (n + 1) := fun i => Fin.cases X (fun j => ρ j) i
+theorem DecodeAux.inv {X : PER D} (h : DecodeAux k U' c c' X)
+  : DecodeAux.Inv k U' c c' X := by
+  cases h <;> grind [
+    DecodeAux.Inv.univ,
+    DecodeAux.Inv.pi,
+    DecodeAux.Inv.sigma,
+    DecodeAux.Inv.bool,
+    DecodeAux.Inv.id
+  ]
 
-inductive DecodeAux (k : Nat) (U' : ∀ ℓ, ℓ < k → PER D)
-: DecodeEnv m (D := D) → D → D → PER D → Prop where
-| univ (h : ℓ < k) : DecodeAux k U' ρ (mkU ℓ) (mkU ℓ) (U' ℓ h)
-| pi : DecodeAux k U' ρ a a' A
-    → (∀ {d d' : D}, (d ~ d' ∈ₚ A) → DecodeAux k U' ρ (f d) (f' d') (B d))
-    → DecodeAux k U' ρ (Π̂ a f) (Π̂ a' f') (PER.pi A B)
-| sigma : DecodeAux k U' ρ a a' A
-       → (∀ {d d' : D}, (d ~ d' ∈ₚ A) → DecodeAux k U' ρ (f d) (f' d') (B d))
-       → DecodeAux k U' ρ (Σ̂ a f) (Σ̂ a' f') (PER.sigma A B)
-| bool : DecodeAux k U' ρ mkBool mkBool PER.bool
-| id : DecodeAux k U' ρ t t' A → (a ~ a' ∈ₚ A) → (b ~ b' ∈ₚ A)
-    → DecodeAux k U' ρ (Îd t a b) (Îd t' a' b') (PER.id A a b)
-| muvar (h : i < m) : DecodeAux k U' ρ (mkMuVar i) (mkMuVar i) (ρ (Fin.mk i h))
-| mu : {F : PER D → PER D}
-    → (∀ (X : PER D), DecodeAux k U' (DecodeEnv.cons ρ X) (f $ mkMuVar n) (f' $ mkMuVar n) (F X))
-    → DecodeAux k U' ρ (mkMu f) (mkMu f') (PER.muFix F)
-
-
--- -- Forded Decode
--- inductive DecodeAux.Inv (k : Nat) (U' : ∀ ℓ, ℓ < k → PER D) (c c' : D) (X : PER D) : Prop where
--- | univ (hℓ : ℓ < k) (_ : c = mkU ℓ) (_ : c' = mkU ℓ)
---            (_ : X = U' ℓ hℓ)
--- | pi
---     (_ : c = Π̂ a f) (_ : c' = Π̂ a' f')
---     (_ : DecodeAux k U' a a' A)
---     (_ : ∀ {d d' : D}, (d ~ d' ∈ₚ A) → DecodeAux k U' (f d) (f' d') (B d))
---     (_ : X = PER.pi A B)
--- | sigma
---     (_ : c = Σ̂ a f) (_ : c' = Σ̂ a' f')
---     (_ : DecodeAux k U' a a' A)
---     (_ : ∀ {d d' : D}, (d ~ d' ∈ₚ A) → DecodeAux k U' (f d) (f' d') (B d))
---     (_ : X = PER.sigma A B)
--- | bool
---     (_ : c = mkBool) (_ : c' = mkBool)
---     (_ : X = PER.bool)
--- | id
---     (_ : c = Îd t a b) (_ : c' = Îd t' a' b')
---     (_ : DecodeAux k U' t t' A)
---     (_ : a ~ a' ∈ₚ A) (_ : b ~ b' ∈ₚ A)
---     (_ : X = PER.id A a b)
-
--- theorem DecodeAux.inv {X : PER D} (h : DecodeAux k U' c c' X)
---   : DecodeAux.Inv k U' c c' X := by
---   cases h <;> grind [
---     DecodeAux.Inv.univ,
---     DecodeAux.Inv.pi,
---     DecodeAux.Inv.sigma,
---     DecodeAux.Inv.bool,
---     DecodeAux.Inv.id
---   ]
-
--- private theorem DecodeAux.det {U₁ : ∀ ℓ, ℓ < ℓ₁ → PER D} {U₂ : ∀ ℓ, ℓ < ℓ₂ → PER D}
---   (_ : ∀ ℓ (hk₁ : ℓ < ℓ₁) (hk₂ : ℓ < ℓ₂), U₁ ℓ hk₁ = U₂ ℓ hk₂)
---   (h₁ : DecodeAux ℓ₁ U₁ c c₁ X) (h₂ : DecodeAux ℓ₂ U₂ c c₂ Y)
---   : X = Y := by induction h₁ generalizing c₂ Y with
---   | univ =>
---     rcases h₂.inv
---     case univ.univ =>
---       simp_all [mkU_inj ‹mkU _ = _›]
---     all_goals have f := ‹mkU _ = _›; simpa using congrArg unU f
---   | bool =>
---     rcases h₂.inv
---     case bool.bool => simp [‹_ = PER.bool›]
---     all_goals have f := ‹mkBool = _›; simpa using congrArg unBool f
---   | pi _ _ ihA ihB =>
---     rcases h₂.inv with _ | ⟨_, _, _, hB1⟩
---     case pi.pi =>
---       simp_all [mkPi_inj ‹mkPi _ _ = _›]
---       rcases ihA ‹DecodeAux ℓ₂ _ _ _ _›
---       apply PER.ext; funext; apply propext
---       constructor
---       · intro hg _ _ hxy; rw [← ihB hxy (hB1 hxy)]; apply hg; assumption
---       · intro hg _ _ hxy; rw [   ihB hxy (hB1 hxy)]; apply hg; assumption
---     all_goals have f := ‹mkPi _ _ = _›; simpa using congrArg unPi f
---   | sigma _ _ ihA ihB =>
---     rcases h₂.inv with _ | _ | ⟨_, _, _, hB1⟩
---     case sigma.sigma =>
---       simp_all [mkSigma_inj ‹mkSigma _ _ = _›]
---       rcases ihA ‹DecodeAux ℓ₂ _ _ _ _›
---       apply PER.ext; funext p q; apply propext
---       constructor
---       · rintro ⟨a, b, a', b', rfl, rfl, hd, hcod⟩
---         exact ⟨a, b, a', b', rfl, rfl, hd, by rw [← ihB hd (hB1 hd)]; exact hcod⟩
---       · rintro ⟨a, b, a', b', rfl, rfl, hd, hcod⟩
---         exact ⟨a, b, a', b', rfl, rfl, hd, by rw [ihB hd (hB1 hd)]; exact hcod⟩
---     all_goals have f := ‹mkSigma _ _ = _›; simpa using congrArg unSigma f
---   | id hsub ha hb ihsub =>
---     rcases h₂.inv
---     case id.id =>
---       simp_all [mkId_inj ‹mkId _ _ _ = _›]
---       simp_all [ihsub ‹DecodeAux ℓ₂ _ _ _ _›]
---     all_goals have f := ‹mkId _ _ _ = _›; simpa using congrArg unId f
+private theorem DecodeAux.det {U₁ : ∀ ℓ, ℓ < ℓ₁ → PER D} {U₂ : ∀ ℓ, ℓ < ℓ₂ → PER D}
+  (_ : ∀ ℓ (hk₁ : ℓ < ℓ₁) (hk₂ : ℓ < ℓ₂), U₁ ℓ hk₁ = U₂ ℓ hk₂)
+  (h₁ : DecodeAux ℓ₁ U₁ c c₁ X) (h₂ : DecodeAux ℓ₂ U₂ c c₂ Y)
+  : X = Y := by induction h₁ generalizing c₂ Y with
+  | univ =>
+    rcases h₂.inv
+    case univ.univ =>
+      simp_all [mkU_inj ‹mkU _ = _›]
+    all_goals have f := ‹mkU _ = _›; simpa using congrArg unU f
+  | bool =>
+    rcases h₂.inv
+    case bool.bool => simp [‹_ = PER.bool›]
+    all_goals have f := ‹mkBool = _›; simpa using congrArg unBool f
+  | pi _ _ ihA ihB =>
+    rcases h₂.inv with _ | ⟨_, _, _, hB1⟩
+    case pi.pi =>
+      simp_all [mkPi_inj ‹mkPi _ _ = _›]
+      rcases ihA ‹DecodeAux ℓ₂ _ _ _ _›
+      apply PER.ext; funext; apply propext
+      constructor
+      · intro hg _ _ hxy; rw [← ihB hxy (hB1 hxy)]; apply hg; assumption
+      · intro hg _ _ hxy; rw [   ihB hxy (hB1 hxy)]; apply hg; assumption
+    all_goals have f := ‹mkPi _ _ = _›; simpa using congrArg unPi f
+  | sigma _ _ ihA ihB =>
+    rcases h₂.inv with _ | _ | ⟨_, _, _, hB1⟩
+    case sigma.sigma =>
+      simp_all [mkSigma_inj ‹mkSigma _ _ = _›]
+      rcases ihA ‹DecodeAux ℓ₂ _ _ _ _›
+      apply PER.ext; funext p q; apply propext
+      constructor
+      · rintro ⟨a, b, a', b', rfl, rfl, hd, hcod⟩
+        exact ⟨a, b, a', b', rfl, rfl, hd, by rw [← ihB hd (hB1 hd)]; exact hcod⟩
+      · rintro ⟨a, b, a', b', rfl, rfl, hd, hcod⟩
+        exact ⟨a, b, a', b', rfl, rfl, hd, by rw [ihB hd (hB1 hd)]; exact hcod⟩
+    all_goals have f := ‹mkSigma _ _ = _›; simpa using congrArg unSigma f
+  | id hsub ha hb ihsub =>
+    rcases h₂.inv
+    case id.id =>
+      simp_all [mkId_inj ‹mkId _ _ _ = _›]
+      simp_all [ihsub ‹DecodeAux ℓ₂ _ _ _ _›]
+    all_goals have f := ‹mkId _ _ _ = _›; simpa using congrArg unId f
 
 
--- private theorem DecodeAux.symm {X : PER D}
---   (h : DecodeAux k U' c c' X) : DecodeAux k U' c' c X := by
---   induction h
---   case id _ ha hb _ =>
---     rw [PER.id_congr ha hb]
---     constructor
---     all_goals grind [PERResp.eq_of_rel _ _, PER.symm]
---   all_goals
---     constructor
---     all_goals grind [ PER.symm, PERResp.eq_of_rel _ _ ]
+private theorem DecodeAux.symm {X : PER D}
+  (h : DecodeAux k U' c c' X) : DecodeAux k U' c' c X := by
+  induction h
+  case id _ ha hb _ =>
+    rw [PER.id_congr ha hb]
+    constructor
+    all_goals grind [PERResp.eq_of_rel _ _, PER.symm]
+  all_goals
+    constructor
+    all_goals grind [ PER.symm, PERResp.eq_of_rel _ _ ]
 
--- private theorem DecodeAux.trans {X : PER D} {Y : PER D}
---   (h₁ : DecodeAux k U' c c' X) (h₂ : DecodeAux k U' c' c'' Y)
---   : DecodeAux k U' c c'' X := by
---   induction h₁ generalizing c'' Y with
---   | univ hℓ =>
---     rcases h₂.inv
---     case univ.univ =>
---       simp_all [mkU_inj ‹mkU _ = _›]
---     all_goals have f := ‹mkU _ = _›; simpa using congrArg unU f
---   | pi hA hB ihA ihB =>
---     rcases h₂.inv with _ | ⟨hc, rfl, hA1, hB1, rfl⟩
---     case pi.pi =>
---       simp_all [mkPi_inj ‹mkPi _ _ = _›]
---       obtain rfl := DecodeAux.det (by simp) hA.symm hA1
---       refine .pi (ihA hA1) ?_
---       intro _ _ hdd; exact ihB (PER.refl_left _ hdd) (hB1 hdd)
---     all_goals have f := ‹mkPi _ _ = _›; simpa using congrArg unPi f
---   | sigma hA hB ihA ihB =>
---     rcases h₂.inv with ⟨_, hc, _, _⟩ | ⟨hc, -, -, -, -⟩ | ⟨hc, rfl, hA1, hB1, rfl⟩
---       | ⟨hc, -, -⟩ | ⟨hc, -, -, -, -, -⟩
---     case sigma.sigma =>
---       simp_all [mkSigma_inj ‹mkSigma _ _ = _›]
---       obtain rfl := DecodeAux.det (by simp) hA.symm hA1
---       refine .sigma (ihA hA1) ?_
---       intro _ _ hdd; exact ihB (PER.refl_left _ hdd) (hB1 hdd)
---     all_goals have f := ‹mkSigma _ _ = _›; simpa using congrArg unSigma f
---   | bool =>
---     rcases h₂.inv with ⟨_, hc, _, _⟩ | ⟨hc, -, -, -, -⟩ | ⟨hc, -, -, -, -⟩
---       | ⟨-, rfl, -⟩ | ⟨hc, -, -, -, -, -⟩
---     case bool.bool => exact .bool
---     all_goals have f := ‹mkBool = _›; simpa using congrArg unBool f
---   | id hsub ha hb ihsub =>
---     rcases h₂.inv with ⟨_, hc, _, _⟩ | ⟨hc, -, -, -, -⟩ | ⟨hc, -, -, -, -⟩
---       | ⟨hc, -, -⟩ | ⟨hc, rfl, hsub2, ha2, hb2, rfl⟩
---     case id.id =>
---       rcases mkId_inj hc with ⟨rfl, rfl, rfl⟩
---       obtain rfl := DecodeAux.det (by simp) hsub.symm hsub2
---       exact DecodeAux.id (ihsub hsub2) (PER.trans _ ha ha2) (PER.trans _ hb hb2)
---     all_goals have f := ‹mkId _ _ _ = _›; simpa using congrArg unId f
+private theorem DecodeAux.trans {X : PER D} {Y : PER D}
+  (h₁ : DecodeAux k U' c c' X) (h₂ : DecodeAux k U' c' c'' Y)
+  : DecodeAux k U' c c'' X := by
+  induction h₁ generalizing c'' Y with
+  | univ hℓ =>
+    rcases h₂.inv
+    case univ.univ =>
+      simp_all [mkU_inj ‹mkU _ = _›]
+    all_goals have f := ‹mkU _ = _›; simpa using congrArg unU f
+  | pi hA hB ihA ihB =>
+    rcases h₂.inv with _ | ⟨hc, rfl, hA1, hB1, rfl⟩
+    case pi.pi =>
+      simp_all [mkPi_inj ‹mkPi _ _ = _›]
+      obtain rfl := DecodeAux.det (by simp) hA.symm hA1
+      refine .pi (ihA hA1) ?_
+      intro _ _ hdd; exact ihB (PER.refl_left _ hdd) (hB1 hdd)
+    all_goals have f := ‹mkPi _ _ = _›; simpa using congrArg unPi f
+  | sigma hA hB ihA ihB =>
+    rcases h₂.inv with ⟨_, hc, _, _⟩ | ⟨hc, -, -, -, -⟩ | ⟨hc, rfl, hA1, hB1, rfl⟩
+      | ⟨hc, -, -⟩ | ⟨hc, -, -, -, -, -⟩
+    case sigma.sigma =>
+      simp_all [mkSigma_inj ‹mkSigma _ _ = _›]
+      obtain rfl := DecodeAux.det (by simp) hA.symm hA1
+      refine .sigma (ihA hA1) ?_
+      intro _ _ hdd; exact ihB (PER.refl_left _ hdd) (hB1 hdd)
+    all_goals have f := ‹mkSigma _ _ = _›; simpa using congrArg unSigma f
+  | bool =>
+    rcases h₂.inv with ⟨_, hc, _, _⟩ | ⟨hc, -, -, -, -⟩ | ⟨hc, -, -, -, -⟩
+      | ⟨-, rfl, -⟩ | ⟨hc, -, -, -, -, -⟩
+    case bool.bool => exact .bool
+    all_goals have f := ‹mkBool = _›; simpa using congrArg unBool f
+  | id hsub ha hb ihsub =>
+    rcases h₂.inv with ⟨_, hc, _, _⟩ | ⟨hc, -, -, -, -⟩ | ⟨hc, -, -, -, -⟩
+      | ⟨hc, -, -⟩ | ⟨hc, rfl, hsub2, ha2, hb2, rfl⟩
+    case id.id =>
+      rcases mkId_inj hc with ⟨rfl, rfl, rfl⟩
+      obtain rfl := DecodeAux.det (by simp) hsub.symm hsub2
+      exact DecodeAux.id (ihsub hsub2) (PER.trans _ ha ha2) (PER.trans _ hb hb2)
+    all_goals have f := ‹mkId _ _ _ = _›; simpa using congrArg unId f
 
 
--- def U (k : Nat) : PER D where
---   rel c c' := ∃ X : PER D, DecodeAux k (fun ℓ _ => U ℓ) c c' X
---   sym := ⟨ fun _ _ h =>
---     h.elim fun X hX => ⟨X, DecodeAux.symm hX⟩
---   ⟩
---   tra := ⟨ fun _ _ _ h h' =>
---     h.elim fun X hX => h'.elim fun _ hY => ⟨X, DecodeAux.trans hX hY⟩
---   ⟩
+def U (k : Nat) : PER D where
+  rel c c' := ∃ X : PER D, DecodeAux k (fun ℓ _ => U ℓ) c c' X
+  sym := ⟨ fun _ _ h =>
+    h.elim fun X hX => ⟨X, DecodeAux.symm hX⟩
+  ⟩
+  tra := ⟨ fun _ _ _ h h' =>
+    h.elim fun X hX => h'.elim fun _ hY => ⟨X, DecodeAux.trans hX hY⟩
+  ⟩
 
--- @[simp]
--- def Decode (k : Nat) (c c' : D) (X : PER D) : Prop :=
---   DecodeAux k (fun ℓ _ => U ℓ) c c' X
+@[simp]
+def Decode (k : Nat) (c c' : D) (X : PER D) : Prop :=
+  DecodeAux k (fun ℓ _ => U ℓ) c c' X
 
--- theorem Decode.symm {X : PER D} (h : Decode k c c' X) : Decode k c' c X :=
---   DecodeAux.symm h
+theorem Decode.symm {X : PER D} (h : Decode k c c' X) : Decode k c' c X :=
+  DecodeAux.symm h
 
--- theorem Decode.trans  {X Y : PER D} (h : Decode k c c' X)
---   (h' : Decode k c' c'' Y) : Decode k c c'' X :=
---   DecodeAux.trans h h'
+theorem Decode.trans  {X Y : PER D} (h : Decode k c c' X)
+  (h' : Decode k c' c'' Y) : Decode k c c'' X :=
+  DecodeAux.trans h h'
 
--- theorem Decode.refl_left {X : PER D} (h : Decode k c c' X) : Decode k c c X :=
---   h.trans h.symm
+theorem Decode.refl_left {X : PER D} (h : Decode k c c' X) : Decode k c c X :=
+  h.trans h.symm
 
--- theorem Decode.det {X Y : PER D} (h : Decode ℓ₁ c c₁ X) (h' : Decode ℓ₂ c c₂ Y)
---   : X = Y := DecodeAux.det (by simp) h h'
+theorem Decode.det {X Y : PER D} (h : Decode ℓ₁ c c₁ X) (h' : Decode ℓ₂ c c₂ Y)
+  : X = Y := DecodeAux.det (by simp) h h'
 
--- @[simp]
--- theorem mem_U : (c ~ c' ∈ₚ U ℓ) ↔ ∃ X : PER D, Decode ℓ c c' X := by
---   unfold U Decode; exact Iff.rfl
+@[simp]
+theorem mem_U : (c ~ c' ∈ₚ U ℓ) ↔ ∃ X : PER D, Decode ℓ c c' X := by
+  unfold U Decode; exact Iff.rfl
 
--- theorem Decode.univ (h : ℓ < k) : Decode k (mkU ℓ : D) (mkU ℓ) (U ℓ) := by
---   simp ; exact (.univ h)
+theorem Decode.univ (h : ℓ < k) : Decode k (mkU ℓ : D) (mkU ℓ) (U ℓ) := by
+  simp ; exact (.univ h)
 
--- theorem Decode.pi {A : PER D}
---     {B : A →ₚ PER.diag (PER D)} (hA : Decode k a a' A)
---     (hB : ∀ {d d' : D}, (d ~ d' ∈ₚ A) → Decode k (f d) (f' d') (B d)) :
---     Decode k (Π̂ a f) (Π̂ a' f') (PER.pi A B) := by
---   simp; exact .pi  hA (fun hdd' => hB hdd')
+theorem Decode.pi {A : PER D}
+    {B : A →ₚ PER.diag (PER D)} (hA : Decode k a a' A)
+    (hB : ∀ {d d' : D}, (d ~ d' ∈ₚ A) → Decode k (f d) (f' d') (B d)) :
+    Decode k (Π̂ a f) (Π̂ a' f') (PER.pi A B) := by
+  simp; exact .pi  hA (fun hdd' => hB hdd')
 
--- theorem Decode.sigma {A : PER D}
---     {B : A →ₚ PER.diag (PER D)} (hA : Decode k a a' A)
---     (hB : ∀ {d d' : D}, (d ~ d' ∈ₚ A) → Decode k (f d) (f' d') (B d)) :
---     Decode k (Σ̂ a f) (Σ̂ a' f') (PER.sigma A B) := by
---   simp; exact .sigma hA (fun hdd' => hB hdd')
+theorem Decode.sigma {A : PER D}
+    {B : A →ₚ PER.diag (PER D)} (hA : Decode k a a' A)
+    (hB : ∀ {d d' : D}, (d ~ d' ∈ₚ A) → Decode k (f d) (f' d') (B d)) :
+    Decode k (Σ̂ a f) (Σ̂ a' f') (PER.sigma A B) := by
+  simp; exact .sigma hA (fun hdd' => hB hdd')
 
--- theorem Decode.bool : Decode k (mkBool : D) mkBool PER.bool := by
---   simp; exact .bool
+theorem Decode.bool : Decode k (mkBool : D) mkBool PER.bool := by
+  simp; exact .bool
 
--- theorem Decode.id {A : PER D} (hA : Decode k t t' A) (ha : a ~ a' ∈ₚ A) (hb : b ~ b' ∈ₚ A) :
---     Decode k (Îd t a b) (Îd t' a' b') (PER.id A a b) := by
---   simp; exact .id hA ha hb
+theorem Decode.id {A : PER D} (hA : Decode k t t' A) (ha : a ~ a' ∈ₚ A) (hb : b ~ b' ∈ₚ A) :
+    Decode k (Îd t a b) (Îd t' a' b') (PER.id A a b) := by
+  simp; exact .id hA ha hb
 
--- theorem Decode.cumul {X : PER D} (h : Decode k c c' X) (hk : k ≤ k')
---   : Decode k' c c' X := by
---   simp; induction h
---   all_goals
---     constructor
---     all_goals grind [LT.lt.trans_le]
+theorem Decode.cumul {X : PER D} (h : Decode k c c' X) (hk : k ≤ k')
+  : Decode k' c c' X := by
+  simp; induction h
+  all_goals
+    constructor
+    all_goals grind [LT.lt.trans_le]
 
--- inductive Decode.Inv (k : Nat) (c c' : D) (X : PER D) : Prop where
--- | univ (hℓ : ℓ < k) (hc : c = mkU ℓ) (hc' : c' = mkU ℓ) (hX : X = U ℓ)
--- | pi (hc : c = Π̂ a f) (hc' : c' = Π̂ a' f')
---     (dom : Decode k a a' A)
---     (cod : ∀ {d d' : D}, (d ~ d' ∈ₚ A) → Decode k (f d) (f' d') (B d))
---     (hX : X = PER.pi A B)
--- | sigma (hc : c = Σ̂ a f) (hc' : c' = Σ̂ a' f')
---     (dom : Decode k a a' A)
---     (cod : ∀ {d d' : D}, (d ~ d' ∈ₚ A) → Decode k (f d) (f' d') (B d))
---     (hX : X = PER.sigma A B)
--- | bool (hc : c = mkBool) (hc' : c' = mkBool) (hX : X = PER.bool)
--- | id (hc : c = Îd t a b) (hc' : c' = Îd t' a' b')
---     (dom : Decode k t t' A)
---     (ea : a ~ a' ∈ₚ A) (eb : b ~ b' ∈ₚ A)
---     (hX : X = PER.id A a b)
+inductive Decode.Inv (k : Nat) (c c' : D) (X : PER D) : Prop where
+| univ (hℓ : ℓ < k) (hc : c = mkU ℓ) (hc' : c' = mkU ℓ) (hX : X = U ℓ)
+| pi (hc : c = Π̂ a f) (hc' : c' = Π̂ a' f')
+    (dom : Decode k a a' A)
+    (cod : ∀ {d d' : D}, (d ~ d' ∈ₚ A) → Decode k (f d) (f' d') (B d))
+    (hX : X = PER.pi A B)
+| sigma (hc : c = Σ̂ a f) (hc' : c' = Σ̂ a' f')
+    (dom : Decode k a a' A)
+    (cod : ∀ {d d' : D}, (d ~ d' ∈ₚ A) → Decode k (f d) (f' d') (B d))
+    (hX : X = PER.sigma A B)
+| bool (hc : c = mkBool) (hc' : c' = mkBool) (hX : X = PER.bool)
+| id (hc : c = Îd t a b) (hc' : c' = Îd t' a' b')
+    (dom : Decode k t t' A)
+    (ea : a ~ a' ∈ₚ A) (eb : b ~ b' ∈ₚ A)
+    (hX : X = PER.id A a b)
 
--- theorem Decode.inv {k : Nat} {c c' : D} {X : PER D}
---     (h : Decode k c c' X) : Decode.Inv k c c' X := by
---   simp at *
---   rcases h.inv with ⟨hℓ, hc, hc', rfl⟩ | ⟨hc, hc', hA, hB, rfl⟩ | ⟨hc, hc', hA, hB, rfl⟩
---     | ⟨hc, hc', rfl⟩ | ⟨hc, hc', hsub, ha, hb, rfl⟩
---   · constructor <;> (try assumption); simp
---   · exact .pi hc hc' hA (fun hdd' => hB hdd') rfl
---   · exact .sigma hc hc' hA (fun hdd' => hB hdd') rfl
---   · exact .bool hc hc' rfl
---   · exact .id hc hc' hsub ha hb rfl
+theorem Decode.inv {k : Nat} {c c' : D} {X : PER D}
+    (h : Decode k c c' X) : Decode.Inv k c c' X := by
+  simp at *
+  rcases h.inv with ⟨hℓ, hc, hc', rfl⟩ | ⟨hc, hc', hA, hB, rfl⟩ | ⟨hc, hc', hA, hB, rfl⟩
+    | ⟨hc, hc', rfl⟩ | ⟨hc, hc', hsub, ha, hb, rfl⟩
+  · constructor <;> (try assumption); simp
+  · exact .pi hc hc' hA (fun hdd' => hB hdd') rfl
+  · exact .sigma hc hc' hA (fun hdd' => hB hdd') rfl
+  · exact .bool hc hc' rfl
+  · exact .id hc hc' hsub ha hb rfl
 
--- inductive Decode.UnivInv (k ℓ : Nat) (c' : D) (X : PER D) : Prop where
--- | mk (lt : ℓ < k) (code : c' = mkU ℓ) (per : X = U ℓ)
+inductive Decode.UnivInv (k ℓ : Nat) (c' : D) (X : PER D) : Prop where
+| mk (lt : ℓ < k) (code : c' = mkU ℓ) (per : X = U ℓ)
 
--- theorem decode_univ_inv {k ℓ : Nat} {c' : D} {X : PER D}
---     (h : Decode k (mkU ℓ : D) c' X) : Decode.UnivInv k ℓ c' X := by
---   rcases h.inv
---   case univ => constructor <;> grind [mkU_inj ‹mkU _ = _›]
---   all_goals have f := ‹mkU _ = _›; simpa using congrArg unU f
+theorem decode_univ_inv {k ℓ : Nat} {c' : D} {X : PER D}
+    (h : Decode k (mkU ℓ : D) c' X) : Decode.UnivInv k ℓ c' X := by
+  rcases h.inv
+  case univ => constructor <;> grind [mkU_inj ‹mkU _ = _›]
+  all_goals have f := ‹mkU _ = _›; simpa using congrArg unU f
 
--- inductive Decode.PiInv (k : Nat) (a : D) (f : D →𝒄 D) (c' : D) (X : PER D) : Prop where
--- | mk (a' : D) (f' : D →𝒄 D) (A : PER D) (B : A →ₚ PER.diag (PER D))
---     (code : c' = Π̂ a' f')
---     (dom  : Decode k a a' A)
---     (cod  : ∀ {d d' : D}, (d ~ d' ∈ₚ A) → Decode k (f d) (f' d') (B d))
---     (per  : X = PER.pi A B)
+inductive Decode.PiInv (k : Nat) (a : D) (f : D →𝒄 D) (c' : D) (X : PER D) : Prop where
+| mk (a' : D) (f' : D →𝒄 D) (A : PER D) (B : A →ₚ PER.diag (PER D))
+    (code : c' = Π̂ a' f')
+    (dom  : Decode k a a' A)
+    (cod  : ∀ {d d' : D}, (d ~ d' ∈ₚ A) → Decode k (f d) (f' d') (B d))
+    (per  : X = PER.pi A B)
 
--- theorem decode_pi_inv {k : Nat} {a : D} {f : D →𝒄 D} {c' : D} {X : PER D}
---     (h : Decode k (Π̂ a f) c' X) : Decode.PiInv k a f c' X := by
---   rcases h.inv with ⟨-, hc, -, -⟩ | ⟨hc, rfl, hA, hB, rfl⟩ | ⟨hc, -, -, -, -⟩
---     | ⟨hc, -, -⟩ | ⟨hc, -, -, -, -, -⟩
---   case pi =>
---     simp [mkPi_inj ‹mkPi _ _ = _›]
---     constructor <;> (try assumption); rfl; simp
---   all_goals let f := ‹mkPi _ _ = _›; simpa using congrArg unPi f
+theorem decode_pi_inv {k : Nat} {a : D} {f : D →𝒄 D} {c' : D} {X : PER D}
+    (h : Decode k (Π̂ a f) c' X) : Decode.PiInv k a f c' X := by
+  rcases h.inv with ⟨-, hc, -, -⟩ | ⟨hc, rfl, hA, hB, rfl⟩ | ⟨hc, -, -, -, -⟩
+    | ⟨hc, -, -⟩ | ⟨hc, -, -, -, -, -⟩
+  case pi =>
+    simp [mkPi_inj ‹mkPi _ _ = _›]
+    constructor <;> (try assumption); rfl; simp
+  all_goals let f := ‹mkPi _ _ = _›; simpa using congrArg unPi f
 
--- inductive Decode.SigmaInv (k : Nat) (a : D) (f : D →𝒄 D) (c' : D) (X : PER D) : Prop where
--- | mk (a' : D) (f' : D →𝒄 D) (A : PER D) (B : A →ₚ PER.diag (PER D))
---     (code : c' = Σ̂ a' f')
---     (dom  : Decode k a a' A)
---     (cod  : ∀ {d d' : D}, (d ~ d' ∈ₚ A) → Decode k (f d) (f' d') (B d))
---     (per  : X = PER.sigma A B)
+inductive Decode.SigmaInv (k : Nat) (a : D) (f : D →𝒄 D) (c' : D) (X : PER D) : Prop where
+| mk (a' : D) (f' : D →𝒄 D) (A : PER D) (B : A →ₚ PER.diag (PER D))
+    (code : c' = Σ̂ a' f')
+    (dom  : Decode k a a' A)
+    (cod  : ∀ {d d' : D}, (d ~ d' ∈ₚ A) → Decode k (f d) (f' d') (B d))
+    (per  : X = PER.sigma A B)
 
--- theorem decode_sigma_inv {k : Nat} {a : D} {f : D →𝒄 D} {c' : D} {X : PER D}
---     (h : Decode k (Σ̂ a f) c' X) : Decode.SigmaInv k a f c' X := by
---   rcases h.inv with ⟨-, hc, -, -⟩ | ⟨hc, -, -, -, -⟩ | ⟨hc, rfl, hA, hB, rfl⟩
---     | ⟨hc, -, -⟩ | ⟨hc, -, -, -, -, -⟩
---   case sigma =>
---     simp [mkSigma_inj ‹mkSigma _ _ = _›]
---     constructor <;> (try assumption); rfl; simp
---   all_goals let f := ‹mkSigma _ _ = _›; simpa using congrArg unSigma f
+theorem decode_sigma_inv {k : Nat} {a : D} {f : D →𝒄 D} {c' : D} {X : PER D}
+    (h : Decode k (Σ̂ a f) c' X) : Decode.SigmaInv k a f c' X := by
+  rcases h.inv with ⟨-, hc, -, -⟩ | ⟨hc, -, -, -, -⟩ | ⟨hc, rfl, hA, hB, rfl⟩
+    | ⟨hc, -, -⟩ | ⟨hc, -, -, -, -, -⟩
+  case sigma =>
+    simp [mkSigma_inj ‹mkSigma _ _ = _›]
+    constructor <;> (try assumption); rfl; simp
+  all_goals let f := ‹mkSigma _ _ = _›; simpa using congrArg unSigma f
 
--- inductive Decode.BoolInv (k : Nat) (c' : D) (X : PER D) : Prop where
--- | mk (code : c' = mkBool) (per : X = PER.bool)
+inductive Decode.BoolInv (k : Nat) (c' : D) (X : PER D) : Prop where
+| mk (code : c' = mkBool) (per : X = PER.bool)
 
--- theorem decode_bool_inv {k : Nat} {c' : D} {X : PER D}
---     (h : Decode k (mkBool : D) c' X) : Decode.BoolInv k c' X := by
---   rcases h.inv with ⟨-, hc, -, -⟩ | ⟨hc, -, -, -, -⟩ | ⟨hc, -, -, -, -⟩
---     | ⟨-, hc', rfl⟩ | ⟨hc, -, -, -, -, -⟩
---   case bool => exact ⟨hc', rfl⟩
---   all_goals have f := ‹mkBool = _›; simpa using congrArg unBool f
+theorem decode_bool_inv {k : Nat} {c' : D} {X : PER D}
+    (h : Decode k (mkBool : D) c' X) : Decode.BoolInv k c' X := by
+  rcases h.inv with ⟨-, hc, -, -⟩ | ⟨hc, -, -, -, -⟩ | ⟨hc, -, -, -, -⟩
+    | ⟨-, hc', rfl⟩ | ⟨hc, -, -, -, -, -⟩
+  case bool => exact ⟨hc', rfl⟩
+  all_goals have f := ‹mkBool = _›; simpa using congrArg unBool f
 
--- inductive Decode.IdInv (k : Nat) (t a b : D) (c' : D) (X : PER D) : Prop where
--- | mk (t' a' b' : D) (A : PER D)
---     (code : c' = Îd t' a' b')
---     (dom : Decode k t t' A)
---     (ea : a ~ a' ∈ₚ A) (eb : b ~ b' ∈ₚ A)
---     (per : X = PER.id A a b)
+inductive Decode.IdInv (k : Nat) (t a b : D) (c' : D) (X : PER D) : Prop where
+| mk (t' a' b' : D) (A : PER D)
+    (code : c' = Îd t' a' b')
+    (dom : Decode k t t' A)
+    (ea : a ~ a' ∈ₚ A) (eb : b ~ b' ∈ₚ A)
+    (per : X = PER.id A a b)
 
--- theorem decode_id_inv {k : Nat} {t a b : D} {c' : D} {X : PER D}
---     (h : Decode k (Îd t a b) c' X) : Decode.IdInv k t a b c' X := by
---   rcases h.inv with ⟨-, hc, -, -⟩ | ⟨hc, -, -, -, -⟩ | ⟨hc, -, -, -, -⟩
---     | ⟨hc, -, -⟩ | ⟨hc, hc', hsub, ha, hb, rfl⟩
---   case id =>
---     obtain ⟨rfl, rfl, rfl⟩ := mkId_inj hc
---     exact ⟨_, _, _, _, hc', hsub, ha, hb, rfl⟩
---   all_goals let f := ‹mkId _ _ _ = _›; simpa using congrArg unId f
+theorem decode_id_inv {k : Nat} {t a b : D} {c' : D} {X : PER D}
+    (h : Decode k (Îd t a b) c' X) : Decode.IdInv k t a b c' X := by
+  rcases h.inv with ⟨-, hc, -, -⟩ | ⟨hc, -, -, -, -⟩ | ⟨hc, -, -, -, -⟩
+    | ⟨hc, -, -⟩ | ⟨hc, hc', hsub, ha, hb, rfl⟩
+  case id =>
+    obtain ⟨rfl, rfl, rfl⟩ := mkId_inj hc
+    exact ⟨_, _, _, _, hc', hsub, ha, hb, rfl⟩
+  all_goals let f := ‹mkId _ _ _ = _›; simpa using congrArg unId f
 
--- def El (ℓ : Nat) (c : D) : PER D where
---   rel x y := ∃ X : PER D, Decode ℓ c c X ∧ (x ~ y ∈ₚ X)
---   sym := ⟨fun _ _ ⟨X, hX, hxy⟩ => ⟨X, hX, X.symm hxy⟩⟩
---   tra := ⟨fun _ _ _ ⟨X, hX, h1⟩ ⟨_, hY, h2⟩ => ⟨X, hX, X.trans h1 (Decode.det hY hX ▸ h2)⟩⟩
+def El (ℓ : Nat) (c : D) : PER D where
+  rel x y := ∃ X : PER D, Decode ℓ c c X ∧ (x ~ y ∈ₚ X)
+  sym := ⟨fun _ _ ⟨X, hX, hxy⟩ => ⟨X, hX, X.symm hxy⟩⟩
+  tra := ⟨fun _ _ _ ⟨X, hX, h1⟩ ⟨_, hY, h2⟩ => ⟨X, hX, X.trans h1 (Decode.det hY hX ▸ h2)⟩⟩
 
--- theorem El_eq_of_decode {ℓ : Nat} {c c' : D} {X : PER D}
---     (h : Decode ℓ c c' X) : El ℓ c = X := by
---   apply PER.ext
---   funext x y
---   apply propext
---   exact ⟨fun ⟨X', hX', hxy⟩ => hX'.det h.refl_left ▸ hxy, fun hxy => ⟨X, h.refl_left, hxy⟩⟩
+theorem El_eq_of_decode {ℓ : Nat} {c c' : D} {X : PER D}
+    (h : Decode ℓ c c' X) : El ℓ c = X := by
+  apply PER.ext
+  funext x y
+  apply propext
+  exact ⟨fun ⟨X', hX', hxy⟩ => hX'.det h.refl_left ▸ hxy, fun hxy => ⟨X, h.refl_left, hxy⟩⟩
 
--- theorem Decode.el {ℓ : Nat} {c c' : D} (h : c ~ c' ∈ₚ U ℓ) : Decode ℓ c c' (El ℓ c) := by
---   obtain ⟨X, hX⟩ := mem_U.mp h
---   rw [El_eq_of_decode hX]
---   exact hX
+theorem Decode.el {ℓ : Nat} {c c' : D} (h : c ~ c' ∈ₚ U ℓ) : Decode ℓ c c' (El ℓ c) := by
+  obtain ⟨X, hX⟩ := mem_U.mp h
+  rw [El_eq_of_decode hX]
+  exact hX
 
--- theorem El.det {c x y : D} (h₁ : x ~ y ∈ₚ El ℓ₁ c) (h₂ : x ~ y ∈ₚ El ℓ₂ c) :
---     El ℓ₁ c = El ℓ₂ c := by
---   obtain ⟨X, hX, _⟩ := h₁
---   obtain ⟨Y, hY, _⟩ := h₂
---   rw [El_eq_of_decode hX, El_eq_of_decode hY, Decode.det hX hY]
+theorem El.det {c x y : D} (h₁ : x ~ y ∈ₚ El ℓ₁ c) (h₂ : x ~ y ∈ₚ El ℓ₂ c) :
+    El ℓ₁ c = El ℓ₂ c := by
+  obtain ⟨X, hX, _⟩ := h₁
+  obtain ⟨Y, hY, _⟩ := h₂
+  rw [El_eq_of_decode hX, El_eq_of_decode hY, Decode.det hX hY]
