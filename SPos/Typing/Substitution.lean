@@ -124,6 +124,17 @@ theorem DefEq.subst (heq : Γ ⊢ t₁ ≡ t₂ ∶ τ) (hΔ : ⊢ Δ) (hσ : Su
       simp only [Tm.subst, Tm.subst1_subst, Tm.weaken_subst, Subst.lift, Fin.cases_zero]
         at hIdT' hC' hd' ⊢
       exact DefEq.jβ hτ' (DefEq.subst ha hΔ hσ) hIdT' hC' hd'
+  | .mu (ℓ := ℓ) hB hp₁ hp₂ => by
+      have hΔu := hΔ.cons (DefEq.u (ℓ := ℓ) hΔ)
+      have hB' := DefEq.subst hB hΔu (hσ.lift (τ := 𝓤 ℓ) hΔu)
+      exact DefEq.mu hB' (by simpa [Tm.Positive] using hp₁)
+        (by simpa [Tm.Positive] using hp₂)
+  | .roll (ℓ := ℓ) hB hp ht => by
+      have hΔu := hΔ.cons (DefEq.u (ℓ := ℓ) hΔ)
+      have hB' := DefEq.subst hB hΔu (hσ.lift (τ := 𝓤 ℓ) hΔu)
+      have ht' := DefEq.subst ht hΔ hσ
+      simp only [Tm.subst1_subst, Tm.subst] at ht' ⊢
+      exact DefEq.roll hB' (by simpa [Tm.Positive] using hp) ht'
 
 theorem Subst.WellTyped.single (hΓ : ⊢ Γ) (hu : Γ ⊢ u ∶ τ) :
     Subst.WellTyped (Subst.single u) (Γ ∷ τ) Γ := by

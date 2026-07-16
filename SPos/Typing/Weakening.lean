@@ -112,6 +112,15 @@ theorem DefEq.rename (heq : Γ ⊢ t ≡ t' ∶ τ) (hΔ : ⊢ Δ) (hr : Ren.Wel
       simp only [Tm.rename, Tm.subst1_rename, Tm.weaken_rename, Ren.lift, Fin.cases_zero]
         at hIdT' hC' hd' ⊢
       exact DefEq.jβ hτ' (DefEq.rename ha hΔ hr) hIdT' hC' hd'
+  | .mu hB hp₁ hp₂ => by
+      have hB' := DefEq.rename hB (hΔ.cons (DefEq.u hΔ)) hr.lift
+      exact DefEq.mu hB' (by simpa [Tm.Positive] using hp₁)
+        (by simpa [Tm.Positive] using hp₂)
+  | .roll hB hp ht => by
+      have hB' := DefEq.rename hB (hΔ.cons (DefEq.u hΔ)) hr.lift
+      have ht' := DefEq.rename ht hΔ hr
+      simp only [Tm.subst1_rename, Tm.rename] at ht' ⊢
+      exact DefEq.roll hB' (by simpa [Tm.Positive] using hp) ht'
 
 theorem Ren.succ_wellTyped (Γ : Ctx n) (σ : Tm n) :
     Ren.WellTyped Fin.succ Γ (Γ ∷ σ) :=

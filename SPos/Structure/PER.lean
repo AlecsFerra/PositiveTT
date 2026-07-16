@@ -73,13 +73,6 @@ theorem PERRespND.mk_apply (f : D → S)
 theorem PER.ext {R S : PER D} (h : R.rel = S.rel) : R = S := by
   cases R; cases S; cases h; simp
 
-/-! ### The inclusion order on PERs
-
-PERs over `D` ordered by inclusion of their relations. Arbitrary intersections
-of PERs are PERs, so least fixed points of monotone operators exist by
-Knaster–Tarski; `PER.muFix` is the least-prefixed-point formula directly.
--/
-
 instance : PartialOrder (PER D) where
   le R S := ∀ ⦃a b : D⦄, (a ~ b ∈ₚ R) → (a ~ b ∈ₚ S)
   le_refl _ _ _ h := h

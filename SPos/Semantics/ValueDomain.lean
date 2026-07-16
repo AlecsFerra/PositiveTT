@@ -13,6 +13,8 @@ inductive Label where
 | Id : Label
 | Refl : Label
 | Mu : Label
+-- Semantic μ-variables: inert codes standing for the recursive self-reference
+-- while decoding the body of an inductive type (de Bruijn levels).
 | MuVar : Nat → Label
 deriving DecidableEq
 
@@ -308,6 +310,50 @@ theorem ScottDomain.unId_mkMu (c : D →𝒄 D) : unId (μ̂ c : D) = none := by
 @[simp]
 theorem ScottDomain.unMu_mkId (a x y : D) : unMu (Îd a x y) = none := by
   simp [unMu, mkId, ωScottContinuous.mk_lam, pair.ret_inj, flat.ret_inj]
+
+-- `MuVar` codes are flat, so `flat.ret` discriminates them from everything else.
+@[simp]
+theorem ScottDomain.unMuVar_mkMuVar (n : Nat) : unMuVar (mkMuVar (D := D) n) = some n := by
+  simp [unMuVar, mkMuVar, flat.ret_inj]
+@[simp]
+theorem ScottDomain.unU_mkMuVar (n : Nat) : unU (mkMuVar (D := D) n) = none := by
+  simp [unU, mkMuVar, flat.ret_inj]
+@[simp]
+theorem ScottDomain.unMuVar_mkU (n : Nat) : unMuVar (mkU (D := D) n) = none := by
+  simp [unMuVar, mkU, flat.ret_inj]
+@[simp]
+theorem ScottDomain.unBool_mkMuVar (n : Nat) : unBool (mkMuVar (D := D) n) = false := by
+  simp [unBool, mkMuVar, flat.ret_inj]
+@[simp]
+theorem ScottDomain.unMuVar_mkBool : unMuVar (mkBool : D) = none := by
+  simp [unMuVar, mkBool, flat.ret_inj]
+@[simp]
+theorem ScottDomain.unPi_mkMuVar (n : Nat) : unPi (mkMuVar (D := D) n) = none := by
+  simp [unPi, mkMuVar]
+@[simp]
+theorem ScottDomain.unMuVar_mkPi (a : D) (f : D →𝒄 D) : unMuVar (Π̂ a f) = none := by
+  simp [unMuVar, mkPi, ωScottContinuous.mk_lam]
+@[simp]
+theorem ScottDomain.unSigma_mkMuVar (n : Nat) : unSigma (mkMuVar (D := D) n) = none := by
+  simp [unSigma, mkMuVar]
+@[simp]
+theorem ScottDomain.unMuVar_mkSigma (a : D) (f : D →𝒄 D) : unMuVar (Σ̂ a f) = none := by
+  simp [unMuVar, mkSigma, ωScottContinuous.mk_lam]
+@[simp]
+theorem ScottDomain.unId_mkMuVar (n : Nat) : unId (mkMuVar (D := D) n) = none := by
+  simp [unId, mkMuVar]
+@[simp]
+theorem ScottDomain.unMuVar_mkId (a x y : D) : unMuVar (Îd a x y) = none := by
+  simp [unMuVar, mkId, ωScottContinuous.mk_lam]
+@[simp]
+theorem ScottDomain.unMu_mkMuVar (n : Nat) : unMu (mkMuVar (D := D) n) = none := by
+  simp [unMu, mkMuVar]
+@[simp]
+theorem ScottDomain.unMuVar_mkMu (c : D →𝒄 D) : unMuVar (μ̂ c : D) = none := by
+  simp [unMuVar, mkMu, ωScottContinuous.mk_lam]
+
+theorem ScottDomain.mkMuVar_inj (h : mkMuVar (D := D) n = mkMuVar n') : n = n' := by
+  simpa using congrArg unMuVar h
 
 theorem ScottDomain.mkMu_inj {c c' : D →𝒄 D} (h : (μ̂ c : D) = μ̂ c') : c = c' := by
   simpa using congrArg unMu h

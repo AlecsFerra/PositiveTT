@@ -9,3 +9,10 @@ theorem Lookup.inv (h : Δ ∋ i ∶ σ) (hΔ : Δ = Γ ∷ τ) : Lookup.Inv Γ 
   cases h with
   | here     => obtain ⟨rfl, rfl⟩ := Env.cons_inj hΔ; exact .here rfl rfl
   | there hj => obtain ⟨rfl, rfl⟩ := Env.cons_inj hΔ; exact .there _ _ rfl rfl hj
+
+theorem WfCtx.of_cons (h : ⊢ Δ) (hΔ : Δ = Γ ∷ τ) : ⊢ Γ := by
+  cases h with
+  | cons hΓ _ => obtain ⟨rfl, rfl⟩ := Env.cons_inj hΔ; exact hΓ
+
+@[grind →]
+theorem WfCtx.tail (h : ⊢ Γ ∷ τ) : ⊢ Γ := WfCtx.of_cons h rfl

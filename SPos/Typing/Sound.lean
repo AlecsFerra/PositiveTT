@@ -456,6 +456,20 @@ theorem DefEq.sound {Γ : Ctx n} {t t' τ : Tm n} (ht : Γ ⊢ t ≡ t' ∶ τ) 
     obtain rfl := hXres.det hW'.symm.refl_left
     exact ⟨_, hType, Xres, hXres.refl_left, by simpa [Tm.eval] using hmemd⟩
   | .jβ _ _ _ _ hd => by simpa [Tm.eval] using DefEq.sound hd hρ
+  -- The μ cases need the (m, ρ)-relativized fundamental lemma: `Models` and the
+  -- conclusion must be stated against `DecodeRel`/`URel` at a μ-variable
+  -- environment, so that the IH for the body `B` can be instantiated at the
+  -- value environment `ρ ∷ mkMuVar m` with decode environment `ρ.snoc X`
+  -- (the variable inhabits its type `𝓤 ℓ` via `DecodeAux.muvar` + the
+  -- relativized `univ` rule). `roll` additionally needs the two
+  -- positivity-powered lemmas:
+  --  * irrelevance: for `B.Positive`, the decode of `⟦B⟧(δ ∷ v)` depends on
+  --    `v` only through its decoded PER (instantiated at `v = mkMuVar m`
+  --    under `ρ.snoc (PER.muFix F)` vs `v = μ̂ f` under `ρ`), giving
+  --    `El (⟦B [/ μ B]⟧δ) = F (PER.muFix F)`;
+  --  * monotonicity of `F` from `Tm.polarity`, so `PER.muFix_fixed` closes.
+  | .mu _ _ _ => sorry
+  | .roll _ _ _ => sorry
 
 theorem WfTm.sound {Γ : Ctx n} {t τ : Tm n} (ht : Γ ⊢ t ∶ τ) {ρ ρ' : DEnv n}
     (hρ : ρ ∼ ρ' ⊨ Γ) :

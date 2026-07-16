@@ -1,4 +1,5 @@
 import SPos.Syntax.Syntax
+import SPos.Syntax.Polarity
 import Aesop
 
 abbrev Ctx := Env Tm
@@ -51,13 +52,13 @@ inductive DefEq : Ctx n → Tm n → Tm n → Tm n → Prop where
 | pi  :
    Γ ⊢ τ₁ ≡ τ₂ ∶ 𝓤 ℓ₁ → Γ ∷ τ₁ ⊢ υ₁ ≡ υ₂ ∶ 𝓤 ℓ₂
    ----------------------------------------------
-→ Γ ⊢ Π τ₁ υ₁ ≡ Π τ₂ υ₂ ∶ 𝓤 (max ℓ₁ ℓ₂)
+→ Γ ⊢ Π̶ τ₁ υ₁ ≡ Π̶ τ₂ υ₂ ∶ 𝓤 (max ℓ₁ ℓ₂)
 | lam :
    Γ ∷ τ₁ ⊢ υ ∶ 𝓤 ℓ' → Γ ⊢ τ₁ ≡ τ₂ ∶ 𝓤 ℓ → Γ ∷ τ₁ ⊢ t₁ ≡ t₂ ∶ υ
    ----------------------------------------------------------------
-→ Γ ⊢ ƛ τ₁ t₁ ≡ ƛ τ₂ t₂ ∶ (Π τ₁ υ)
+→ Γ ⊢ ƛ τ₁ t₁ ≡ ƛ τ₂ t₂ ∶ (Π̶ τ₁ υ)
 | app :
-   Γ ⊢ t₁ ≡ t₂ ∶ (Π τ υ) → Γ ⊢ m₁ ≡ m₂ ∶ τ
+   Γ ⊢ t₁ ≡ t₂ ∶ (Π̶ τ υ) → Γ ⊢ m₁ ≡ m₂ ∶ τ
    ----------------------------------------
 → Γ ⊢ t₁ • m₁ ≡ t₂ • m₂ ∶ υ [/ m₁ ]
 | lamβ :
@@ -65,9 +66,9 @@ inductive DefEq : Ctx n → Tm n → Tm n → Tm n → Prop where
    --------------------------------------------------------------
 → Γ ⊢ (ƛ τ t) • m ≡ t [/ m ] ∶ υ [/ m ]
 | lamη :
-   Γ ⊢ t ∶ Π τ υ
+   Γ ⊢ t ∶ Π̶ τ υ
    --------------------------------
-→ Γ ⊢ t ≡ ƛ τ (↑ t) • # 0 ∶ Π τ υ
+→ Γ ⊢ t ≡ ƛ τ (↑ t) • # 0 ∶ Π̶ τ υ
 -- Sigma
 | sigma :
    Γ ⊢ τ₁ ≡ τ₂ ∶ 𝓤 ℓ₁ → Γ ∷ τ₁ ⊢ υ₁ ≡ υ₂ ∶ 𝓤 ℓ₂
@@ -148,6 +149,17 @@ inductive DefEq : Ctx n → Tm n → Tm n → Tm n → Prop where
 →  Γ ⊢ d ∶ C [/ refl (↑ τ) (↑ a) ] [/ a ]
     -------------------------------------------------------------------
 →  Γ ⊢ J C d (refl τ a) ≡ d ∶ C [/ refl (↑ τ) (↑ a) ] [/ a ]
+-- Inductive types: the body binds the self-reference, which must occur
+-- positively; `roll` is the (iso-recursive) introduction form
+| mu :
+   Γ ∷ 𝓤 ℓ ⊢ B₁ ≡ B₂ ∶ 𝓤 ℓ → B₁.Positive → B₂.Positive
+   -----------------------------------------------------
+→ Γ ⊢ μ B₁ ≡ μ B₂ ∶ 𝓤 ℓ
+| roll :
+   Γ ∷ 𝓤 ℓ ⊢ B ∶ 𝓤 ℓ → B.Positive
+→ Γ ⊢ t₁ ≡ t₂ ∶ B [/ μ B ]
+   ---------------------------------
+→ Γ ⊢ roll t₁ ≡ roll t₂ ∶ μ B
 end
 end
 

@@ -12,6 +12,7 @@ import SPos.Syntax.SyntaxProperties
 import SPos.Typing.DerivedSum
 import SPos.Typing.Regularity
 import SPos.Typing.Sound
+import SPos.Typing.SoundRel
 import SPos.Typing.Substitution
 import SPos.Typing.Typing
 import SPos.Typing.TypingProperties

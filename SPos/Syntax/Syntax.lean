@@ -27,7 +27,7 @@ inductive Tm : (n : Nat) → Type where
 
 prefix:(max - 1) "#" => Tm.var
 
-notation "Π" => Tm.pi
+notation "Π̶" => Tm.pi
 notation "ƛ" => Tm.lam
 infixr:(max - 1) "•" => Tm.app
 
