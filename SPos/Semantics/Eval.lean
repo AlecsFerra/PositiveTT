@@ -32,6 +32,10 @@ noncomputable def Tm.eval : Tm n → (DEnv n) →𝒄 D
 | .id τ a b => ƛ[ by fun_prop ] ρ ↦ Îd (⟦ τ ⟧𝒄 ρ) (⟦ a ⟧𝒄 ρ) (⟦ b ⟧𝒄 ρ)
 | .refl _ _ => ƛ[ by fun_prop ] _ ↦ mkRefl
 | .j _ d _ => ⟦ d ⟧𝒄
+-- `mu` evaluates to the code of its body's closure; `roll` is the identity on
+-- realizers (the elements of `mu B` are exactly those of its unfolding).
+| .mu b    => ƛ[ by fun_prop ] ρ ↦ μ̂ (ƛ[ by fun_prop ] d ↦ ⟦ b ⟧𝒄 (ρ ∷ d))
+| .roll t  => ⟦ t ⟧𝒄
 | .u ℓ     => ƛ[ by fun_prop ] ρ ↦ Û ℓ
 end
 

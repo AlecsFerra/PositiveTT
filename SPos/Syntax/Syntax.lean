@@ -19,6 +19,10 @@ inductive Tm : (n : Nat) → Type where
 | id   : Tm n → Tm n → Tm n → Tm n
 | refl : Tm n → Tm n → Tm n
 | j    : Tm (n + 2) → Tm n → Tm n → Tm n
+-- Inductive types: `mu B` binds the self-reference in its body (which must
+-- occur positively), `roll` is the introduction form `B [/ mu B ] → mu B`
+| mu   : Tm (n + 1) → Tm n
+| roll : Tm n → Tm n
 -- Universe
 | u  : Nat → Tm n
 
@@ -36,6 +40,9 @@ abbrev pr₂ (p : Tm n) : Tm n := Tm.snd p
 notation "Id" => Tm.id
 notation "refl" => Tm.refl
 notation "J" => Tm.j
+
+notation "μ" => Tm.mu
+notation "roll" => Tm.roll
 
 notation "𝔹" => Tm.bool
 abbrev tt : Tm n := Tm.true
@@ -65,6 +72,8 @@ def Tm.rename (ρ : Ren n m) : Tm n → Tm m
 | .id τ a b  => .id (τ.rename ρ) (a.rename ρ) (b.rename ρ)
 | .refl τ a  => .refl (τ.rename ρ) (a.rename ρ)
 | .j c d p   => .j (c.rename ρ.lift.lift) (d.rename ρ) (p.rename ρ)
+| .mu b      => .mu (b.rename ρ.lift)
+| .roll t    => .roll (t.rename ρ)
 | .u ℓ       => .u ℓ
 
 def Tm.weaken : Tm n → Tm (n + 1) := Tm.rename Fin.succ
@@ -92,6 +101,8 @@ def Tm.subst (σ : Subst n m) : Tm n → Tm m
 | .id τ a b  => .id (τ.subst σ) (a.subst σ) (b.subst σ)
 | .refl τ a  => .refl (τ.subst σ) (a.subst σ)
 | .j c d p   => .j (c.subst σ.lift.lift) (d.subst σ) (p.subst σ)
+| .mu b      => .mu (b.subst σ.lift)
+| .roll t    => .roll (t.subst σ)
 | .u ℓ       => .u ℓ
 
 def Subst.single (u : Tm n) : Subst (n + 1) n :=

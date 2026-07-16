@@ -12,6 +12,7 @@ inductive Label where
 | False : Label
 | Id : Label
 | Refl : Label
+| Mu : Label
 
 variable {D : Type u} [ScottDomain D Label]
 
@@ -87,6 +88,19 @@ def ScottDomain.unId (d : D) : Option (D × D × D) :=
     let (a, xy) := pair.ret rest
     let (x, y)  := pair.ret xy
     some (a, x, y)
+  | _ => none
+
+-- The code of an inductive type: the closure of its body, a `D →𝒄 D` sending a
+-- (code of a) stage to the (code of the) body at that stage.
+def ScottDomain.mkMu : (D →𝒄 D) →𝒄 D :=
+  ƛ[ by fun_prop ] c ↦ (#𝒄 .Mu ,𝒄 lam.inj c)
+
+notation "μ̂" => ScottDomain.mkMu
+
+def ScottDomain.unMu (d : D) : Option (D →𝒄 D) :=
+  let (l, rest) := pair.ret d
+  match flat.ret l with
+  | .val .Mu => some (lam.ret rest)
   | _ => none
 
 def ScottDomain.mkRefl : D := #𝒄 .Refl
@@ -249,6 +263,44 @@ theorem ScottDomain.unPi_mkId (a x y : D) : unPi (Îd a x y) = none := by
 @[simp]
 theorem ScottDomain.unId_mkPi (a : D) (f : D →𝒄 D) : unId (Π̂ a f) = none := by
   simp [unId, mkPi, ωScottContinuous.mk_lam, pair.ret_inj, flat.ret_inj]
+
+-- `Mu` codes vs the other type codes.
+@[simp]
+theorem ScottDomain.unMu_mkMu (c : D →𝒄 D) : unMu (μ̂ c) = some c := by
+  simp [unMu, mkMu, ωScottContinuous.mk_lam, pair.ret_inj, flat.ret_inj, lam.ret_inj]
+@[simp]
+theorem ScottDomain.unU_mkMu (c : D →𝒄 D) : unU (μ̂ c : D) = none := by
+  simp [unU, mkMu, ωScottContinuous.mk_lam]
+@[simp]
+theorem ScottDomain.unMu_mkU (n : Nat) : unMu (mkU (D := D) n) = none := by
+  simp [unMu, mkU]
+@[simp]
+theorem ScottDomain.unPi_mkMu (c : D →𝒄 D) : unPi (μ̂ c : D) = none := by
+  simp [unPi, mkMu, ωScottContinuous.mk_lam, pair.ret_inj, flat.ret_inj]
+@[simp]
+theorem ScottDomain.unMu_mkPi (a : D) (f : D →𝒄 D) : unMu (Π̂ a f) = none := by
+  simp [unMu, mkPi, ωScottContinuous.mk_lam, pair.ret_inj, flat.ret_inj]
+@[simp]
+theorem ScottDomain.unSigma_mkMu (c : D →𝒄 D) : unSigma (μ̂ c : D) = none := by
+  simp [unSigma, mkMu, ωScottContinuous.mk_lam, pair.ret_inj, flat.ret_inj]
+@[simp]
+theorem ScottDomain.unMu_mkSigma (a : D) (f : D →𝒄 D) : unMu (Σ̂ a f) = none := by
+  simp [unMu, mkSigma, ωScottContinuous.mk_lam, pair.ret_inj, flat.ret_inj]
+@[simp]
+theorem ScottDomain.unBool_mkMu (c : D →𝒄 D) : unBool (μ̂ c : D) = false := by
+  simp [unBool, mkMu, ωScottContinuous.mk_lam]
+@[simp]
+theorem ScottDomain.unMu_mkBool : unMu (mkBool : D) = none := by
+  simp [unMu, mkBool]
+@[simp]
+theorem ScottDomain.unId_mkMu (c : D →𝒄 D) : unId (μ̂ c : D) = none := by
+  simp [unId, mkMu, ωScottContinuous.mk_lam, pair.ret_inj, flat.ret_inj]
+@[simp]
+theorem ScottDomain.unMu_mkId (a x y : D) : unMu (Îd a x y) = none := by
+  simp [unMu, mkId, ωScottContinuous.mk_lam, pair.ret_inj, flat.ret_inj]
+
+theorem ScottDomain.mkMu_inj {c c' : D →𝒄 D} (h : (μ̂ c : D) = μ̂ c') : c = c' := by
+  simpa using congrArg unMu h
 
 theorem ScottDomain.mkU_inj (h : mkU (D := D) ℓ = mkU ℓ') : ℓ = ℓ' := by
   simpa using congrArg unU h
