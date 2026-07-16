@@ -10,7 +10,6 @@ variable {D : Type u} [ScottDomain D Label]
 
 local notation "DEnv" => Env (fun _ => D)
 
--- `ρ ∼ ρ' ⊨ Γ`: pointwise-related environments in the PER decoding each type.
 def Models (ρ ρ' : DEnv n) (Γ : Ctx n) : Prop :=
   ∀ {i : Fin n} {τ : Tm n}, (Γ ∋ i ∶ τ) →
     ∃ (ℓ : Nat) (X : PER D), Decode ℓ (⟦ τ ⟧𝒄 ρ) (⟦ τ ⟧𝒄 ρ') X ∧ (ρ.get i ~ ρ'.get i ∈ₚ X)
@@ -30,7 +29,6 @@ theorem Models.symm {ρ ρ' : DEnv n} (hρ : ρ ∼ ρ' ⊨ Γ) : ρ' ∼ ρ ⊨
   obtain ⟨ℓ, X, hX, hmem⟩ := hρ hlook
   exact ⟨ℓ, X, hX.symm, X.symm hmem⟩
 
--- Extending related environments by values related in the pushed type.
 theorem Models.cons {ρ ρ' : DEnv n} (hρ : ρ ∼ ρ' ⊨ Γ) (hA : Decode ℓ (⟦ τ ⟧𝒄 ρ) (⟦ τ ⟧𝒄 ρ') A)
     (hd : d ~ d' ∈ₚ A) : (ρ ∷ d) ∼ (ρ' ∷ d') ⊨ (Γ ∷ τ) := by
   intro i σ hlook
@@ -39,13 +37,6 @@ theorem Models.cons {ρ ρ' : DEnv n} (hρ : ρ ∼ ρ' ⊨ Γ) (hA : Decode ℓ
   · obtain ⟨k, X, hX, hmem⟩ := hρ hj
     exact ⟨k, X, by simpa only [Tm.eval_weaken] using hX, by simpa using hmem⟩
 
--- Fundamental theorem: definitionally-equal terms evaluated in related
--- environments yield related values in the `El` of their type, whose code is
--- itself related in the universe (`… ∈ₚ U ℓ`).  Typing is the diagonal of the
--- equality judgment, so this single theorem is the whole model.  The
--- `U`-conjunct records that the type denotation is coherent across `ρ` and `ρ'`
--- (`El` alone only sees the left one), which conversion and `symm` need; the
--- residual `∃ ℓ : Nat` is level bookkeeping.
 theorem DefEq.sound {Γ : Ctx n} {t t' τ : Tm n} (ht : Γ ⊢ t ≡ t' ∶ τ) {ρ ρ' : DEnv n}
     (hρ : ρ ∼ ρ' ⊨ Γ) :
     ∃ ℓ, (⟦ τ ⟧𝒄 ρ ~ ⟦ τ ⟧𝒄 ρ' ∈ₚ U ℓ) ∧ (⟦ t ⟧𝒄 ρ ~ ⟦ t' ⟧𝒄 ρ' ∈ₚ El ℓ (⟦ τ ⟧𝒄 ρ)) :=
@@ -475,9 +466,6 @@ theorem WfTm.sound {Γ : Ctx n} {t τ : Tm n} (ht : Γ ⊢ t ∶ τ) {ρ ρ' : D
     ∃ ℓ, (⟦ τ ⟧𝒄 ρ ~ ⟦ τ ⟧𝒄 ρ' ∈ₚ U ℓ) ∧ (⟦ t ⟧𝒄 ρ ~ ⟦ t ⟧𝒄 ρ' ∈ₚ El ℓ (⟦ τ ⟧𝒄 ρ)) :=
   DefEq.sound ht hρ
 
--- Soundness in the `El`-form fixed by a chosen typing `Γ ⊢ τ ∶ 𝓤 ℓ`: the level is
--- the hypothesis's, not existentially bundled. (`El` is level-independent, so this
--- pins the bundled `∃ ℓ` to the syntactic witness.)
 theorem WfTm.sound_el {ρ ρ' : DEnv n}
     (h : Γ ⊢ t ∶ τ) (hτ : Γ ⊢ τ ∶ 𝓤 ℓ) (hρ : ρ ∼ ρ' ⊨ Γ) :
     ⟦ t ⟧𝒄 ρ ~ ⟦ t ⟧𝒄 ρ' ∈ₚ El ℓ (⟦ τ ⟧𝒄 ρ) := by
