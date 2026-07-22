@@ -413,47 +413,42 @@ theorem Approx.getV_scottContinuous [CompletePartialOrder ρ] :
         simp only [Approx.getV, Approx.get'_op_of_ne ht]
         exact le_trans (OrderBot.bot_le (Approx.getV t i x)) (hu ⟨x, hx, rfl⟩)
 
-def Dinf.projV (t : Tag) (i : Fin t.arity.1) (x : D∞) : D∞ where
-  approx n := (x.approx (n + 1)).getV t i
-  coh n := by
-    rw [← x.coh (n + 1)]
+/-- Project the `i`-th value payload under tag `t`, level by level. -/
+def Dinf.projV (t : Tag) (i : Fin t.arity.1) : D∞ →ₛ D∞ := by
+  refine ƛₛ[?_] x ↦ ⟨fun n => (x.approx (n + 1)).getV t i, fun n => ?_⟩
+  · rw [← x.coh (n + 1)]
     conv_rhs => rw [D.down, D.shift]
     exact (Approx.getV_imap (D.shift (n + 1) n) (D.shift n (n + 1)) D.shift_bot _).symm
+  · intro d hne hdir a ha
+    apply Dinf.isLUB_of_approx
+    intro n
+    simpa [Function.comp, Set.image_image] using
+      ((Dinf.scottContinuous_approx (n + 1)).comp
+        (Approx.getV_scottContinuous (t := t) (i := i))) hne hdir ha
 
 @[simp]
 theorem Dinf.projV_op {v : List.Vector D∞ t.arity.1} {w} :
-    (Dinf.op t v w).projV t i = v.get i := by
+    Dinf.projV t i (Dinf.op t v w) = v.get i := by
   apply Dinf.ext; intro n
-  show Approx.getV t i ((Dinf.op t v w).approx (n+1)) = _
+  show Approx.getV t i ((Dinf.op t v w).approx (n + 1)) = _
   simp [Dinf.op, List.Vector.get_map]
 
 @[simp]
-theorem Dinf.projV_bot : (⊥ : D∞).projV t i = ⊥ := by
+theorem Dinf.projV_bot : Dinf.projV t i ⊥ = ⊥ := by
   apply Dinf.ext; intro n
-  show Approx.getV t i (⊥ : D (n+1)) = (⊥ : D n)
+  show Approx.getV t i (⊥ : D (n + 1)) = (⊥ : D n)
   rfl
 
-theorem Dinf.projV_mono {x y : D∞} (hxy : x ≤ y) : x.projV t i ≤ y.projV t i :=
-  fun n => Approx.getV_mono (hxy (n + 1))
+def Dinf.fst : D∞ →ₛ D∞ := Dinf.projV .pair ⟨0, by simp⟩
+def Dinf.snd : D∞ →ₛ D∞ := Dinf.projV .pair ⟨1, by simp⟩
+def Dinf.unroll : D∞ →ₛ D∞ := Dinf.projV .roll ⟨0, by simp⟩
 
-def Dinf.iteOn (b t f : D∞) : D∞ :=
-  if b.tagOf = some .true then t else if b.tagOf = some .false then f else ⊥
-
-@[simp]
-theorem Dinf.iteOn_true : Dinf.iteOn Dinf.true t f = t := by simp [Dinf.iteOn]
-
-@[simp]
-theorem Dinf.iteOn_false : Dinf.iteOn Dinf.false t f = f := by simp [Dinf.iteOn]
-
-@[simp]
-theorem Dinf.iteOn_bot : Dinf.iteOn ⊥ t f = ⊥ := by simp [Dinf.iteOn]
-
-theorem Dinf.iteOn_eq_bot (h₁ : b.tagOf ≠ some .true) (h₂ : b.tagOf ≠ some .false) :
-    Dinf.iteOn b t f = ⊥ := by simp [Dinf.iteOn, h₁, h₂]
-
-theorem Dinf.iteOn_mono (hb : b₁ ≤ b₂) (ht : t₁ ≤ t₂) (hf : f₁ ≤ f₂) :
-    Dinf.iteOn b₁ t₁ f₁ ≤ Dinf.iteOn b₂ t₂ f₂ := by
-  unfold Dinf.iteOn
+/-- `Dinf.ite b t f` selects on the tag of `b`, and is `⊥` unless `b` is a boolean.
+Monotone because a tag, once present, never changes (`Dinf.tagOf_mono`). -/
+theorem Dinf.monotone_ite {b₁ b₂ t₁ t₂ f₁ f₂ : D∞}
+    (hb : b₁ ≤ b₂) (ht : t₁ ≤ t₂) (hf : f₁ ≤ f₂) :
+    (if b₁.tagOf = some .true then t₁ else if b₁.tagOf = some .false then f₁ else ⊥)
+      ≤ if b₂.tagOf = some .true then t₂ else if b₂.tagOf = some .false then f₂ else ⊥ := by
   by_cases h₁ : b₁.tagOf = some .true
   · rw [if_pos h₁, if_pos (Dinf.tagOf_mono hb h₁)]; exact ht
   · rw [if_neg h₁]
@@ -463,61 +458,59 @@ theorem Dinf.iteOn_mono (hb : b₁ ≤ b₂) (ht : t₁ ≤ t₂) (hf : f₁ ≤
     · rw [if_neg h₂]; exact bot_le
 
 @[fun_prop]
-theorem Dinf.iteOn_scottContinuous [Preorder E] {b t f : E → D∞}
+theorem Dinf.scottContinuous_ite [Preorder E] {b t f : E → D∞}
     (hb : ScottContinuous b) (ht : ScottContinuous t) (hf : ScottContinuous f) :
-    ScottContinuous fun e => Dinf.iteOn (b e) (t e) (f e) := by
+    ScottContinuous fun e =>
+      if (b e).tagOf = some .true then t e else if (b e).tagOf = some .false then f e else ⊥ := by
   intro d hne hdir a ha
   constructor
   · rintro _ ⟨x, hx, rfl⟩
-    exact Dinf.iteOn_mono (hb.monotone (ha.1 hx)) (ht.monotone (ha.1 hx)) (hf.monotone (ha.1 hx))
+    exact Dinf.monotone_ite (hb.monotone (ha.1 hx)) (ht.monotone (ha.1 hx)) (hf.monotone (ha.1 hx))
   · intro u hu
-    by_cases h₁ : (b a).tagOf = some .true
-    · obtain ⟨z, hz, hzt⟩ := Dinf.exists_tagOf_of_isLUB (hne.image b) (hdir.mono_comp hb.monotone)
-        (hb hne hdir ha) h₁
-      obtain ⟨z, hz, rfl⟩ := hz
-      simp only [Dinf.iteOn, if_pos h₁]
-      refine (ht hne hdir ha).2 ?_
+    show (if (b a).tagOf = some .true then t a else
+          if (b a).tagOf = some .false then f a else ⊥) ≤ u
+    -- Both boolean branches run the same argument: the tag already occurs at some
+    -- `z ∈ d`, and above `z` the `ite` has already committed to that branch.
+    have branch : ∀ (tg : Tag) (r : E → D∞), ScottContinuous r → (b a).tagOf = some tg →
+        (∀ e, (b e).tagOf = some tg →
+          r e ≤ if (b e).tagOf = some .true then t e else
+                if (b e).tagOf = some .false then f e else ⊥) → r a ≤ u := by
+      intro tg r hr htag hcommit
+      obtain ⟨_, ⟨z, hz, rfl⟩, hzt⟩ := Dinf.exists_tagOf_of_isLUB (hne.image b)
+        (hdir.mono_comp hb.monotone) (hb hne hdir ha) htag
+      refine (hr hne hdir ha).2 ?_
       rintro _ ⟨x, hx, rfl⟩
       obtain ⟨y, hy, hxy, hzy⟩ := hdir x hx z hz
-      refine le_trans (ht.monotone hxy) ?_
-      have hyt : (b y).tagOf = some .true := Dinf.tagOf_mono (hb.monotone hzy) hzt
-      simpa [Dinf.iteOn, hyt] using hu ⟨y, hy, rfl⟩
-    · by_cases h₂ : (b a).tagOf = some .false
-      · obtain ⟨z, hz, hzf⟩ := Dinf.exists_tagOf_of_isLUB (hne.image b)
-          (hdir.mono_comp hb.monotone) (hb hne hdir ha) h₂
-        obtain ⟨z, hz, rfl⟩ := hz
-        simp only [Dinf.iteOn, if_neg h₁, if_pos h₂]
-        refine (hf hne hdir ha).2 ?_
-        rintro _ ⟨x, hx, rfl⟩
-        obtain ⟨y, hy, hxy, hzy⟩ := hdir x hx z hz
-        refine le_trans (hf.monotone hxy) ?_
-        have hyf : (b y).tagOf = some .false := Dinf.tagOf_mono (hb.monotone hzy) hzf
-        have hyt : (b y).tagOf ≠ some .true := by rw [hyf]; simp
-        simpa [Dinf.iteOn, hyt, hyf] using hu ⟨y, hy, rfl⟩
-      · simp [Dinf.iteOn_eq_bot h₁ h₂]
-
-@[fun_prop]
-theorem Dinf.projV_scottContinuous [Preorder E] {x : E → D∞} (hx : ScottContinuous x) :
-    ScottContinuous fun e => (x e).projV t i := by
-  intro d hne hdir a ha
-  apply Dinf.isLUB_of_approx
-  intro n
-  have h := (hx.comp (Dinf.scottContinuous_approx (n + 1))).comp
-    (Approx.getV_scottContinuous (t := t) (i := i)) hne hdir ha
-  simpa [Function.comp, Set.image_image, Dinf.projV] using h
-
-def Dinf.fst : D∞ →ₛ D∞ := ƛₛ p ↦ p.projV .pair ⟨0, by simp⟩
-def Dinf.snd : D∞ →ₛ D∞ := ƛₛ p ↦ p.projV .pair ⟨1, by simp⟩
-def Dinf.unroll : D∞ →ₛ D∞ := ƛₛ x ↦ x.projV .roll ⟨0, by simp⟩
+      exact le_trans (le_trans (hr.monotone hxy)
+        (hcommit y (Dinf.tagOf_mono (hb.monotone hzy) hzt))) (hu ⟨y, hy, rfl⟩)
+    by_cases h₁ : (b a).tagOf = some .true
+    · rw [if_pos h₁]
+      exact branch _ t ht h₁ fun e he => by rw [if_pos he]
+    · rw [if_neg h₁]
+      by_cases h₂ : (b a).tagOf = some .false
+      · rw [if_pos h₂]
+        exact branch _ f hf h₂ fun e he => by
+          rw [if_neg (by rw [he]; simp), if_pos he]
+      · rw [if_neg h₂]
+        obtain ⟨x, hx⟩ := hne
+        exact le_trans bot_le (hu ⟨x, hx, rfl⟩)
 
 def Dinf.ite : D∞ →ₛ D∞ →ₛ D∞ →ₛ D∞ := by
-  refine ƛₛ[?_] b ↦ ƛₛ[?_] t ↦ ƛₛ[?_] f ↦ Dinf.iteOn b t f
-  · apply Dinf.iteOn_scottContinuous <;> fun_prop
+  refine ƛₛ[?_] b ↦ ƛₛ[?_] t ↦ ƛₛ[?_] f ↦
+    if b.tagOf = some .true then t else if b.tagOf = some .false then f else ⊥
+  · apply Dinf.scottContinuous_ite <;> fun_prop
   · apply ScottContinuousF.of_apply₂; intro f
-    apply Dinf.iteOn_scottContinuous <;> fun_prop
+    apply Dinf.scottContinuous_ite <;> fun_prop
   · apply ScottContinuousF.of_apply₂; intro t
     apply ScottContinuousF.of_apply₂; intro f
-    apply Dinf.iteOn_scottContinuous <;> fun_prop
+    apply Dinf.scottContinuous_ite <;> fun_prop
+
+@[simp] theorem Dinf.ite_true  : Dinf.ite Dinf.true  t f = t := by simp [Dinf.ite]
+@[simp] theorem Dinf.ite_false : Dinf.ite Dinf.false t f = f := by simp [Dinf.ite]
+@[simp] theorem Dinf.ite_bot   : Dinf.ite ⊥ t f = ⊥ := by simp [Dinf.ite]
+
+theorem Dinf.ite_eq_bot (h₁ : b.tagOf ≠ some .true) (h₂ : b.tagOf ≠ some .false) :
+    Dinf.ite b t f = ⊥ := by simp [Dinf.ite, h₁, h₂]
 
 @[simp] theorem Dinf.fst_pair : Dinf.fst (Dinf.pair a b) = a := by
   show Dinf.projV _ _ _ = _
