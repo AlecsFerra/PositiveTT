@@ -153,6 +153,24 @@ lemma ScottContinuousF.of_apply₂ [Preorder γ] [Preorder α] [Preorder β] {f 
     rintro _ ⟨x, hx, rfl⟩
     exact hu ⟨x, hx, rfl⟩ i
 
+theorem ScottContinuous.comp₂ [Preorder α] [Preorder β] [Preorder γ] [Preorder E]
+    {g : α → β → γ} {f₁ : E → α} {f₂ : E → β}
+    (hm : ∀ {a₁ a₂ b₁ b₂}, a₁ ≤ a₂ → b₁ ≤ b₂ → g a₁ b₁ ≤ g a₂ b₂)
+    (hg₁ : ∀ b, ScottContinuous (g · b)) (hg₂ : ∀ a, ScottContinuous (g a))
+    (h₁ : ScottContinuous f₁) (h₂ : ScottContinuous f₂) :
+    ScottContinuous fun e => g (f₁ e) (f₂ e) := by
+  intro d hne hdir c hc
+  constructor
+  · rintro _ ⟨x, hx, rfl⟩
+    exact hm (h₁.monotone (hc.1 hx)) (h₂.monotone (hc.1 hx))
+  · intro u hu
+    refine (hg₂ (f₁ c) (hne.image f₂) (hdir.mono_comp h₂.monotone) (h₂ hne hdir hc)).2 ?_
+    rintro _ ⟨_, ⟨x, hx, rfl⟩, rfl⟩
+    refine (hg₁ (f₂ x) (hne.image f₁) (hdir.mono_comp h₁.monotone) (h₁ hne hdir hc)).2 ?_
+    rintro _ ⟨_, ⟨y, hy, rfl⟩, rfl⟩
+    obtain ⟨z, hz, hyz, hxz⟩ := hdir y hy x hx
+    exact le_trans (hm (h₁.monotone hyz) (h₂.monotone hxz)) (hu ⟨z, hz, rfl⟩)
+
 @[fun_prop]
 lemma ScottContinuousF.scottContinuous_apply [Preorder α] [Preorder β] [CompletePartialOrder γ]
   {f : α → β →ₛ γ} (hf : ScottContinuous f) {g : α → β} (hg : ScottContinuous g) :

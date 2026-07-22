@@ -301,9 +301,6 @@ theorem Dinf.exists_tagOf_of_isLUB {d : Set D∞} {a : D∞} (hne : d.Nonempty)
     exact ⟨z, hz, by unfold Dinf.tagOf; simp only [] at hze; rw [hze]⟩
 
 open Classical in
-/-- Extract a payload from an `Approx`: `sel` picks the field out of the two
-payload vectors, and a tag mismatch (or `bot`) yields `⊥`. `getV`/`getW` are
-the two instantiations. -/
 def Approx.get' [CompletePartialOrder ρ] (t : Tag)
     (sel : List.Vector ρ t.arity.1 → List.Vector (ρ →ₛ ρ) t.arity.2 → ρ)
     (x : Approx ρ) : ρ :=
@@ -338,11 +335,9 @@ theorem Approx.get'_mono [CompletePartialOrder ρ] {sel} {x y : Approx ρ}
       · subst htx; rw [Approx.get'_op, Approx.get'_op]; exact hsel hv hw
       · rw [Approx.get'_op_of_ne htx, Approx.get'_op_of_ne htx]
 
-/-- The value payload: `x.getV t i` is the `i`-th self-reference under tag `t`. -/
 abbrev Approx.getV [CompletePartialOrder ρ] (t : Tag) (i : Fin t.arity.1) (x : Approx ρ) : ρ :=
   x.get' t fun v _ => v.get i
 
-/-- The function payload applied to `a`. -/
 abbrev Approx.getW [CompletePartialOrder ρ] (t : Tag) (j : Fin t.arity.2)
     (x : Approx ρ) (a : ρ) : ρ :=
   x.get' t fun _ w => (w.get j) a
@@ -413,7 +408,6 @@ theorem Approx.getV_scottContinuous [CompletePartialOrder ρ] :
         simp only [Approx.getV, Approx.get'_op_of_ne ht]
         exact le_trans (OrderBot.bot_le (Approx.getV t i x)) (hu ⟨x, hx, rfl⟩)
 
-/-- Project the `i`-th value payload under tag `t`, level by level. -/
 def Dinf.projV (t : Tag) (i : Fin t.arity.1) : D∞ →ₛ D∞ := by
   refine ƛₛ[?_] x ↦ ⟨fun n => (x.approx (n + 1)).getV t i, fun n => ?_⟩
   · rw [← x.coh (n + 1)]
@@ -443,8 +437,6 @@ def Dinf.fst : D∞ →ₛ D∞ := Dinf.projV .pair ⟨0, by simp⟩
 def Dinf.snd : D∞ →ₛ D∞ := Dinf.projV .pair ⟨1, by simp⟩
 def Dinf.unroll : D∞ →ₛ D∞ := Dinf.projV .roll ⟨0, by simp⟩
 
-/-- `Dinf.ite b t f` selects on the tag of `b`, and is `⊥` unless `b` is a boolean.
-Monotone because a tag, once present, never changes (`Dinf.tagOf_mono`). -/
 theorem Dinf.monotone_ite {b₁ b₂ t₁ t₂ f₁ f₂ : D∞}
     (hb : b₁ ≤ b₂) (ht : t₁ ≤ t₂) (hf : f₁ ≤ f₂) :
     (if b₁.tagOf = some .true then t₁ else if b₁.tagOf = some .false then f₁ else ⊥)
@@ -469,8 +461,6 @@ theorem Dinf.scottContinuous_ite [Preorder E] {b t f : E → D∞}
   · intro u hu
     show (if (b a).tagOf = some .true then t a else
           if (b a).tagOf = some .false then f a else ⊥) ≤ u
-    -- Both boolean branches run the same argument: the tag already occurs at some
-    -- `z ∈ d`, and above `z` the `ite` has already committed to that branch.
     have branch : ∀ (tg : Tag) (r : E → D∞), ScottContinuous r → (b a).tagOf = some tg →
         (∀ e, (b e).tagOf = some tg →
           r e ≤ if (b e).tagOf = some .true then t e else
@@ -585,10 +575,61 @@ theorem Dinf.appAt_monotone (t : Tag) (j : Fin t.arity.2) (f a : D∞) :
     Monotone (Dinf.appAt t j f a) :=
   monotone_nat_of_le_succ (Dinf.appAt_succ t j f a)
 
-/-- Apply the `j`-th function payload of `f` (under tag `t`) to `a`, as the
-sup of the finite stages. -/
-def Dinf.projW (t : Tag) (j : Fin t.arity.2) (f a : D∞) : D∞ :=
-  sSup (Set.range (Dinf.appAt t j f a))
+theorem Approx.getW_scottContinuous_arg [CompletePartialOrder ρ] (x : Approx ρ) :
+    ScottContinuous (fun a : ρ => x.getW t j a) := by
+  cases x
+  case bot => simp [Approx.getW]
+  case op t' v w =>
+    by_cases ht : t' = t
+    · subst ht
+      simp only [Approx.getW, Approx.get'_op]
+      exact (w.get j).scottContinuous
+    · simp only [Approx.getW, Approx.get'_op_of_ne ht]; fun_prop
+
+theorem Approx.getW_scottContinuous [CompletePartialOrder ρ] (a : ρ) :
+    ScottContinuous (fun x : Approx ρ => x.getW t j a) := by
+  intro d hne hdir c hc
+  constructor
+  · rintro _ ⟨x, hx, rfl⟩
+    exact Approx.getW_mono (hc.1 hx) a
+  · intro u hu
+    rcases hce : c with _ | ⟨t', v, w⟩
+    · obtain ⟨x, hx⟩ := hne
+      show (⊥ : ρ) ≤ u
+      refine le_trans ?_ (hu ⟨x, hx, rfl⟩)
+      have : x = Approx.bot := by
+        have := hc.1 hx; rw [hce] at this; cases x
+        · rfl
+        · exact this.elim
+      subst this; simp
+    · by_cases ht : t' = t
+      · subst ht; subst hce
+        simp only [Approx.getW, Approx.get'_op]
+        refine (Approx.isLUB_proj_w hdir hc j a).2 ?_
+        rintro _ ⟨v', w', hm, rfl⟩
+        simpa using hu ⟨_, hm, rfl⟩
+      · obtain ⟨x, hx⟩ := hne
+        simp only [Approx.getW, Approx.get'_op_of_ne ht]
+        exact le_trans (OrderBot.bot_le (Approx.getW t j x a)) (hu ⟨x, hx, rfl⟩)
+
+theorem Dinf.scottContinuous_projW [Preorder E] {f a : E → D∞}
+    (hf : ScottContinuous f) (ha : ScottContinuous a) :
+    ScottContinuous fun e => sSup (Set.range (Dinf.appAt t j (f e) (a e))) := by
+  apply ScottContinuous.sSup_range (g := fun n e => Dinf.appAt t j (f e) (a e) n)
+  · intro n
+    refine ScottContinuous.comp ?_ (Dinf.emb).scott_continuous
+    exact ScottContinuous.comp₂
+      (fun h₁ h₂ => le_trans (Approx.getW_mono h₁ _) (Approx.getW_mono_arg _ h₂))
+      (fun b => Approx.getW_scottContinuous b) (fun x => Approx.getW_scottContinuous_arg x)
+      (hf.comp (Dinf.scottContinuous_approx (n + 1))) (ha.comp (Dinf.scottContinuous_approx n))
+  · intro e p q hpq; exact Dinf.appAt_monotone t j (f e) (a e) hpq
+
+def Dinf.projW (t : Tag) (j : Fin t.arity.2) : D∞ →ₛ D∞ →ₛ D∞ := by
+  refine ƛₛ[?_] f ↦ ƛₛ[?_] a ↦ sSup (Set.range (Dinf.appAt t j f a))
+  · apply Dinf.scottContinuous_projW <;> fun_prop
+  · apply ScottContinuousF.of_apply₂; intro a
+    apply Dinf.scottContinuous_projW <;> fun_prop
+
 
 theorem Dinf.projW_lam (b : D∞ →ₛ D∞) (a : D∞) :
     Dinf.projW .lam ⟨0, by simp⟩ (Dinf.lam b) a = b a := by
@@ -617,100 +658,7 @@ theorem Dinf.projW_lam (b : D∞ →ₛ D∞) (a : D∞) :
     exact (b.scott_continuous.monotone
       (Dinf.emb_approx_monotone a (le_max_left n m))) m
 
-theorem Approx.getW_scottContinuous [CompletePartialOrder ρ] (a : ρ) :
-    ScottContinuous (fun x : Approx ρ => x.getW t j a) := by
-  intro d hne hdir c hc
-  constructor
-  · rintro _ ⟨x, hx, rfl⟩
-    exact Approx.getW_mono (hc.1 hx) a
-  · intro u hu
-    rcases hce : c with _ | ⟨t', v, w⟩
-    · obtain ⟨x, hx⟩ := hne
-      show (⊥ : ρ) ≤ u
-      refine le_trans ?_ (hu ⟨x, hx, rfl⟩)
-      have : x = Approx.bot := by
-        have := hc.1 hx; rw [hce] at this; cases x
-        · rfl
-        · exact this.elim
-      subst this; simp
-    · by_cases ht : t' = t
-      · subst ht; subst hce
-        simp only [Approx.getW, Approx.get'_op]
-        refine (Approx.isLUB_proj_w hdir hc j a).2 ?_
-        rintro _ ⟨v', w', hm, rfl⟩
-        simpa using hu ⟨_, hm, rfl⟩
-      · obtain ⟨x, hx⟩ := hne
-        simp only [Approx.getW, Approx.get'_op_of_ne ht]
-        exact le_trans (OrderBot.bot_le (Approx.getW t j x a)) (hu ⟨x, hx, rfl⟩)
-
-theorem Dinf.appAt_scottContinuous_f [Preorder E] {f : E → D∞} (hf : ScottContinuous f)
-    (a : D∞) (n : Nat) : ScottContinuous fun e => Dinf.appAt t j (f e) a n :=
-  ((hf.comp (Dinf.scottContinuous_approx (n + 1))).comp
-    (Approx.getW_scottContinuous (a.approx n))).comp (Dinf.emb).scott_continuous
-
-theorem Dinf.projW_scottContinuous_f [Preorder E] {f : E → D∞} (hf : ScottContinuous f)
-    (a : D∞) : ScottContinuous fun e => Dinf.projW t j (f e) a := by
-  apply ScottContinuous.sSup_range (g := fun n e => Dinf.appAt t j (f e) a n)
-  · intro n; exact Dinf.appAt_scottContinuous_f hf a n
-  · intro e p q hpq; exact Dinf.appAt_monotone t j (f e) a hpq
-
-theorem Approx.getW_scottContinuous_arg [CompletePartialOrder ρ] (x : Approx ρ) :
-    ScottContinuous (fun a : ρ => x.getW t j a) := by
-  cases x
-  case bot => simp [Approx.getW]
-  case op t' v w =>
-    by_cases ht : t' = t
-    · subst ht
-      simp only [Approx.getW, Approx.get'_op]
-      exact (w.get j).scottContinuous
-    · simp only [Approx.getW, Approx.get'_op_of_ne ht]; fun_prop
-
-theorem Dinf.appAt_scottContinuous_a [Preorder E] (f : D∞) {a : E → D∞}
-    (ha : ScottContinuous a) (n : Nat) :
-    ScottContinuous fun e => Dinf.appAt t j f (a e) n :=
-  ((ha.comp (Dinf.scottContinuous_approx n)).comp
-    (Approx.getW_scottContinuous_arg (f.approx (n+1)))).comp (Dinf.emb).scott_continuous
-
-theorem Dinf.projW_scottContinuous_a [Preorder E] (f : D∞) {a : E → D∞}
-    (ha : ScottContinuous a) : ScottContinuous fun e => Dinf.projW t j f (a e) := by
-  apply ScottContinuous.sSup_range (g := fun n e => Dinf.appAt t j f (a e) n)
-  · intro n; exact Dinf.appAt_scottContinuous_a f ha n
-  · intro e p q hpq; exact Dinf.appAt_monotone t j f (a e) hpq
-
-@[fun_prop]
-theorem Dinf.projW_scottContinuous [Preorder E] {f a : E → D∞}
-    (hf : ScottContinuous f) (ha : ScottContinuous a) :
-    ScottContinuous fun e => Dinf.projW t j (f e) (a e) := by
-  apply ScottContinuous.sSup_range (g := fun n e => Dinf.appAt t j (f e) (a e) n)
-  · intro n
-    unfold Dinf.appAt
-    refine ScottContinuous.comp ?_ (Dinf.emb).scott_continuous
-    intro d hne hdir c hc
-    constructor
-    · rintro _ ⟨x, hx, rfl⟩
-      exact le_trans (Approx.getW_mono ((hf.monotone (hc.1 hx)) (n+1)) _)
-        (Approx.getW_mono_arg _ ((ha.monotone (hc.1 hx)) n))
-    · intro u hu
-      refine (Approx.getW_scottContinuous_arg (t := t) (j := j) ((f c).approx (n+1))
-        (hne.image (fun e => (a e).approx n))
-        (hdir.mono_comp (g := fun e => (a e).approx n) (fun _ _ h => (ha.monotone h) n))
-        ((ha.comp (Dinf.scottContinuous_approx n)) hne hdir hc)).2 ?_
-      rintro _ ⟨_, ⟨x, hx, rfl⟩, rfl⟩
-      refine (Approx.getW_scottContinuous (t := t) (j := j) ((a x).approx n)
-        (hne.image (fun e => (f e).approx (n+1)))
-        (hdir.mono_comp (g := fun e => (f e).approx (n+1)) (fun _ _ h => (hf.monotone h) (n+1)))
-        ((hf.comp (Dinf.scottContinuous_approx (n+1))) hne hdir hc)).2 ?_
-      rintro _ ⟨_, ⟨y, hy, rfl⟩, rfl⟩
-      obtain ⟨z, hz, hyz, hxz⟩ := hdir y hy x hx
-      exact le_trans (le_trans (Approx.getW_mono ((hf.monotone hyz) (n+1)) _)
-        (Approx.getW_mono_arg _ ((ha.monotone hxz) n))) (hu ⟨z, hz, rfl⟩)
-  · intro e p q hpq; exact Dinf.appAt_monotone t j (f e) (a e) hpq
-
-def Dinf.app : D∞ →ₛ D∞ →ₛ D∞ := by
-  refine ƛₛ[?_] f ↦ ƛₛ[?_] a ↦ Dinf.projW .lam ⟨0, by simp⟩ f a
-  · apply Dinf.projW_scottContinuous <;> fun_prop
-  · apply ScottContinuousF.of_apply₂; intro a
-    apply Dinf.projW_scottContinuous <;> fun_prop
+def Dinf.app : D∞ →ₛ D∞ →ₛ D∞ := Dinf.projW .lam ⟨0, by simp⟩
 
 @[simp] theorem Dinf.app_lam (b : D∞ →ₛ D∞) (a : D∞) : Dinf.app (Dinf.lam b) a = b a :=
   Dinf.projW_lam b a
