@@ -1,0 +1,638 @@
+-- instance [DirectCompletePartialOrder φ] : DirectCompletePartialOrder (DStep φ ρ) where
+--   isLUB_l_image := by
+--     intro d _ _ a ha
+--     cases a <;> simp_all [LE.le]
+
+-- instance [OmegaCompletePartialOrder ρ] : OrderBot (DStep φ ρ) where
+--   bot := .bot
+--   bot_le := by intro x; cases x <;> simp_all [LE.le]
+
+-- instance [OmegaCompletePartialOrder p] : PartialOrder (DStep φ p) where
+--   le_antisymm := by
+--     intro x y hxy hyx
+--     cases x <;> cases y
+--     all_goals simp_all [LE.le]
+--     case lam.lam =>
+--       ext x; exact le_antisymm (hxy _) (hyx _)
+--     case pair.pair =>
+--       constructor
+--       · exact le_antisymm hxy.1 hyx.1
+--       · exact le_antisymm hxy.2 hyx.2
+
+
+-- private theorem DStep.chain_lam [OmegaCompletePartialOrder ρ]
+--     {b : ρ →𝒄 ρ} (chain : Chain (DStep φ ρ)) (i : Nat) (hlam : chain i = lam b)
+--     : ∀ j, j ≥ i → ∃ b', chain j = .lam b' := by
+--     by_contra h; push Not at h
+--     obtain ⟨j, p, _⟩ := h
+--     cases h: chain j
+--     case lam => simp_all
+--     all_goals simpa [hlam, h, LE.le] using chain.monotone p
+
+-- private theorem DStep.chain_pair [OmegaCompletePartialOrder ρ]
+--     (chain : Chain (DStep φ ρ)) (i : Nat) (hpair : chain i = .pair a b)
+--     : ∀ j, j ≥ i → ∃ a' b', chain j = .pair a' b' := by
+--     by_contra h; push Not at h
+--     obtain ⟨j, p, _⟩ := h
+--     cases h: chain j
+--     case pair => simp_all
+--     all_goals simpa [hpair, h, LE.le] using chain.monotone p
+
+-- private theorem DStep.chain_flat [OmegaCompletePartialOrder ρ]
+--     (chain : Chain (DStep φ ρ)) (i : Nat) (hflat : chain i = .flat x) :
+--     ∀ j, j ≥ i → chain j = .flat x := by
+--     by_contra h; push Not at h
+--     obtain ⟨j, p, r⟩ := h
+--     cases h: chain j
+--     case flat f =>
+--       by_cases h' : f = x
+--       · simp_all
+--       · apply h'.elim
+--         have p : x = f := by
+--           simpa [Eq.symm, hflat, h, LE.le] using chain.monotone p
+--         exact h'.elim p.symm
+--     all_goals simpa [hflat, h, LE.le] using chain.monotone p
+
+-- private theorem DStep.lam_ne_flat [OmegaCompletePartialOrder ρ]
+--     {b : ρ →𝒄 ρ} {x : φ} (chain : Chain (DStep φ ρ)) {i j : ℕ}
+--     (hl : chain i = .lam b) (hf : chain j = .flat x) : False := by
+--   obtain ⟨b', hb'⟩ := DStep.chain_lam chain i hl (max i j) (le_max_left i j)
+--   have hfl := DStep.chain_flat chain j hf (max i j) (le_max_right i j)
+--   rw [hb'] at hfl; simp at hfl
+
+-- private theorem DStep.lam_ne_pair [OmegaCompletePartialOrder ρ]
+--     {b : ρ →𝒄 ρ} {a c' : ρ} (chain : Chain (DStep φ ρ)) {i j : ℕ}
+--     (hl : chain i = .lam b) (hp : chain j = .pair a c') : False := by
+--   obtain ⟨b', hb'⟩ := DStep.chain_lam chain i hl (max i j) (le_max_left i j)
+--   obtain ⟨a', c'', hp'⟩ := DStep.chain_pair chain j hp (max i j) (le_max_right i j)
+--   rw [hb'] at hp'; simp at hp'
+
+-- private theorem DStep.flat_ne_pair [OmegaCompletePartialOrder ρ]
+--     {x : φ} {a c' : ρ} (chain : Chain (DStep φ ρ)) {i j : ℕ}
+--     (hf : chain i = .flat x) (hp : chain j = .pair a c') : False := by
+--   have hff := DStep.chain_flat chain i hf (max i j) (le_max_left i j)
+--   obtain ⟨a', c'', hp'⟩ := DStep.chain_pair chain j hp (max i j) (le_max_right i j)
+--   rw [hff] at hp'; simp at hp'
+
+-- private theorem DStep.flat_val_eq [OmegaCompletePartialOrder ρ]
+--     {x y : φ} (chain : Chain (DStep φ ρ)) {i j : ℕ}
+--     (hi : chain i = .flat x) (hj : chain j = .flat y) : x = y := by
+--   have h1 := DStep.chain_flat chain i hi (max i j) (le_max_left i j)
+--   have h2 := DStep.chain_flat chain j hj (max i j) (le_max_right i j)
+--   rw [h1] at h2; exact DStep.flat.inj h2
+
+-- -- Shape forced by an order bound.
+-- private theorem DStep.eq_lam_of_lam_le [OmegaCompletePartialOrder ρ]
+--     {b : ρ →𝒄 ρ} {x : DStep φ ρ} (h : (.lam b : DStep φ ρ) ≤ x) : ∃ g, x = .lam g := by
+--   cases x with
+--   | lam g => exact ⟨g, rfl⟩
+--   | bot => simp [LE.le] at h
+--   | flat y => simp [LE.le] at h
+--   | pair a b => simp [LE.le] at h
+
+-- private theorem DStep.eq_pair_of_pair_le [OmegaCompletePartialOrder ρ]
+--     {a b : ρ} {x : DStep φ ρ} (h : (.pair a b : DStep φ ρ) ≤ x) :
+--     ∃ a' b', x = .pair a' b' := by
+--   cases x with
+--   | pair a' b' => exact ⟨a', b', rfl⟩
+--   | bot => simp [LE.le] at h
+--   | flat y => simp [LE.le] at h
+--   | lam g => simp [LE.le] at h
+
+-- -- The chain of `lam` bodies from index `i`, when the tail is all `lam`.
+-- noncomputable def DStep.lamChain [OmegaCompletePartialOrder ρ]
+--     (chain : Chain (DStep φ ρ)) (i : ℕ)
+--     (h : ∀ j, j ≥ i → ∃ b', chain j = .lam b') : Chain (ρ →𝒄 ρ) where
+--   toFun j := (h (i + j) (Nat.le_add_right i j)).choose
+--   monotone' := by
+--     intro j₁ j₂ hj
+--     have e1 := (h (i + j₁) (Nat.le_add_right i j₁)).choose_spec
+--     have e2 := (h (i + j₂) (Nat.le_add_right i j₂)).choose_spec
+--     have hm : chain (i + j₁) ≤ chain (i + j₂) :=
+--       chain.monotone (show i + j₁ ≤ i + j₂ by omega)
+--     rw [e1, e2] at hm; exact hm
+
+-- theorem DStep.lamChain_spec [OmegaCompletePartialOrder ρ]
+--     (chain : Chain (DStep φ ρ)) (i : ℕ)
+--     (h : ∀ j, j ≥ i → ∃ b', chain j = .lam b') (j : ℕ) :
+--     chain (i + j) = .lam (DStep.lamChain chain i h j) :=
+--   (h (i + j) (Nat.le_add_right i j)).choose_spec
+
+-- -- Every `lam` body of the chain is below the body-sup, independent of `i`.
+-- theorem DStep.lamChain_body_le [OmegaCompletePartialOrder ρ]
+--     (chain : Chain (DStep φ ρ)) (i : ℕ) (h : ∀ j, j ≥ i → ∃ b', chain j = .lam b')
+--     {k : ℕ} {bk : ρ →𝒄 ρ} (hk : chain k = .lam bk) :
+--     bk ≤ OmegaCompletePartialOrder.ωSup (DStep.lamChain chain i h) := by
+--   have hik : i ≤ max k i := le_max_right k i
+--   have hmi : i + (max k i - i) = max k i := by omega
+--   have spec := DStep.lamChain_spec chain i h (max k i - i)
+--   rw [hmi] at spec
+--   have hle : chain k ≤ chain (max k i) := chain.monotone (le_max_left k i)
+--   rw [hk, spec] at hle
+--   calc bk ≤ DStep.lamChain chain i h (max k i - i) := hle
+--     _ ≤ OmegaCompletePartialOrder.ωSup (DStep.lamChain chain i h) :=
+--         OmegaCompletePartialOrder.le_ωSup (DStep.lamChain chain i h) (max k i - i)
+
+-- -- The body-sup is below any common upper bound of the bodies.
+-- theorem DStep.lamChain_ωSup_le [OmegaCompletePartialOrder ρ]
+--     (chain : Chain (DStep φ ρ)) (i : ℕ) (h : ∀ j, j ≥ i → ∃ b', chain j = .lam b')
+--     {g : ρ →𝒄 ρ} (hg : ∀ k bk, chain k = .lam bk → bk ≤ g) :
+--     OmegaCompletePartialOrder.ωSup (DStep.lamChain chain i h) ≤ g := by
+--   apply OmegaCompletePartialOrder.ωSup_le
+--   intro j
+--   exact hg (i + j) _ (DStep.lamChain_spec chain i h j)
+
+-- -- The chain of `pair` components from index `i`, when the tail is all `pair`.
+-- noncomputable def DStep.pairChain [OmegaCompletePartialOrder ρ]
+--     (chain : Chain (DStep φ ρ)) (i : ℕ)
+--     (h : ∀ j, j ≥ i → ∃ p : ρ × ρ, chain j = .pair p.1 p.2) : Chain (ρ × ρ) where
+--   toFun j := (h (i + j) (Nat.le_add_right i j)).choose
+--   monotone' := by
+--     intro j₁ j₂ hj
+--     have e1 := (h (i + j₁) (Nat.le_add_right i j₁)).choose_spec
+--     have e2 := (h (i + j₂) (Nat.le_add_right i j₂)).choose_spec
+--     have hm : chain (i + j₁) ≤ chain (i + j₂) :=
+--       chain.monotone (show i + j₁ ≤ i + j₂ by omega)
+--     rw [e1, e2] at hm; exact hm
+
+-- theorem DStep.pairChain_spec [OmegaCompletePartialOrder ρ]
+--     (chain : Chain (DStep φ ρ)) (i : ℕ)
+--     (h : ∀ j, j ≥ i → ∃ p : ρ × ρ, chain j = .pair p.1 p.2) (j : ℕ) :
+--     chain (i + j) = .pair (DStep.pairChain chain i h j).1 (DStep.pairChain chain i h j).2 :=
+--   (h (i + j) (Nat.le_add_right i j)).choose_spec
+
+-- theorem DStep.pairChain_le [OmegaCompletePartialOrder ρ]
+--     (chain : Chain (DStep φ ρ)) (i : ℕ)
+--     (h : ∀ j, j ≥ i → ∃ p : ρ × ρ, chain j = .pair p.1 p.2)
+--     {k : ℕ} {ak bk : ρ} (hk : chain k = .pair ak bk) :
+--     ak ≤ (OmegaCompletePartialOrder.ωSup (DStep.pairChain chain i h)).1 ∧
+--     bk ≤ (OmegaCompletePartialOrder.ωSup (DStep.pairChain chain i h)).2 := by
+--   have hik : i ≤ max k i := le_max_right k i
+--   have hmi : i + (max k i - i) = max k i := by omega
+--   have spec := DStep.pairChain_spec chain i h (max k i - i)
+--   rw [hmi] at spec
+--   have hle : chain k ≤ chain (max k i) := chain.monotone (le_max_left k i)
+--   rw [hk, spec] at hle
+--   have hle' : ak ≤ (DStep.pairChain chain i h (max k i - i)).1 ∧
+--               bk ≤ (DStep.pairChain chain i h (max k i - i)).2 := hle
+--   have hstep : (DStep.pairChain chain i h (max k i - i)).1 ≤
+--                  (OmegaCompletePartialOrder.ωSup (DStep.pairChain chain i h)).1 ∧
+--                (DStep.pairChain chain i h (max k i - i)).2 ≤
+--                  (OmegaCompletePartialOrder.ωSup (DStep.pairChain chain i h)).2 :=
+--     OmegaCompletePartialOrder.le_ωSup (DStep.pairChain chain i h) (max k i - i)
+--   exact ⟨le_trans hle'.1 hstep.1, le_trans hle'.2 hstep.2⟩
+
+-- theorem DStep.pairChain_ωSup_le [OmegaCompletePartialOrder ρ]
+--     (chain : Chain (DStep φ ρ)) (i : ℕ)
+--     (h : ∀ j, j ≥ i → ∃ p : ρ × ρ, chain j = .pair p.1 p.2)
+--     {a' b' : ρ} (hg : ∀ k ak bk, chain k = .pair ak bk → ak ≤ a' ∧ bk ≤ b') :
+--     (OmegaCompletePartialOrder.ωSup (DStep.pairChain chain i h)).1 ≤ a' ∧
+--     (OmegaCompletePartialOrder.ωSup (DStep.pairChain chain i h)).2 ≤ b' := by
+--   have hub : ∀ j, DStep.pairChain chain i h j ≤ (a', b') := by
+--     intro j
+--     exact hg (i + j) _ _ (DStep.pairChain_spec chain i h j)
+--   have hres : (OmegaCompletePartialOrder.ωSup (DStep.pairChain chain i h)).1 ≤ a' ∧
+--               (OmegaCompletePartialOrder.ωSup (DStep.pairChain chain i h)).2 ≤ b' :=
+--     OmegaCompletePartialOrder.ωSup_le (DStep.pairChain chain i h) (a', b') hub
+--   exact hres
+
+-- open Classical in
+-- noncomputable def DStep.ωSup [OmegaCompletePartialOrder ρ]
+--     (chain : Chain (DStep φ ρ)) : DStep φ ρ :=
+--   if hf : ∃ i x, chain i = .flat x then
+--     .flat hf.choose_spec.choose
+--   else if hl : ∃ i b, chain i = .lam b then
+--     .lam (OmegaCompletePartialOrder.ωSup
+--       (DStep.lamChain chain hl.choose
+--         (DStep.chain_lam chain hl.choose hl.choose_spec.choose_spec)))
+--   else if hp : ∃ i a b, chain i = .pair a b then
+--     let s := OmegaCompletePartialOrder.ωSup
+--       (DStep.pairChain chain hp.choose
+--         (fun j hj => by
+--           obtain ⟨a, b, hab⟩ := hp.choose_spec
+--           obtain ⟨a', b', hj'⟩ := DStep.chain_pair chain hp.choose hab j hj
+--           exact ⟨(a', b'), hj'⟩))
+--     .pair s.1 s.2
+--   else .bot
+
+-- theorem DStep.ωSup_flat [OmegaCompletePartialOrder ρ]
+--     (chain : Chain (DStep φ ρ)) {i : ℕ} {x : φ} (hi : chain i = .flat x) :
+--     DStep.ωSup chain = .flat x := by
+--   have hf : ∃ i x, chain i = .flat x := ⟨i, x, hi⟩
+--   unfold DStep.ωSup
+--   rw [dif_pos hf]
+--   congr 1
+--   exact DStep.flat_val_eq chain hf.choose_spec.choose_spec hi
+
+-- theorem DStep.ωSup_lam [OmegaCompletePartialOrder ρ]
+--     (chain : Chain (DStep φ ρ)) {i : ℕ} {b : ρ →𝒄 ρ} (hi : chain i = .lam b) :
+--     ∃ (i0 : ℕ) (h : ∀ j, j ≥ i0 → ∃ b', chain j = .lam b'),
+--       DStep.ωSup chain =
+--         .lam (OmegaCompletePartialOrder.ωSup (DStep.lamChain chain i0 h)) := by
+--   have hnf : ¬ ∃ j x, chain j = .flat x := by
+--     rintro ⟨j, x, hj⟩; exact DStep.lam_ne_flat chain hi hj
+--   have hl : ∃ i b, chain i = .lam b := ⟨i, b, hi⟩
+--   refine ⟨hl.choose, DStep.chain_lam chain hl.choose hl.choose_spec.choose_spec, ?_⟩
+--   unfold DStep.ωSup
+--   rw [dif_neg hnf, dif_pos hl]
+
+-- theorem DStep.ωSup_pair [OmegaCompletePartialOrder ρ]
+--     (chain : Chain (DStep φ ρ)) {i : ℕ} {a b : ρ} (hi : chain i = .pair a b) :
+--     ∃ (i0 : ℕ) (h : ∀ j, j ≥ i0 → ∃ p : ρ × ρ, chain j = .pair p.1 p.2),
+--       DStep.ωSup chain =
+--         .pair (OmegaCompletePartialOrder.ωSup (DStep.pairChain chain i0 h)).1
+--               (OmegaCompletePartialOrder.ωSup (DStep.pairChain chain i0 h)).2 := by
+--   have hnf : ¬ ∃ j x, chain j = .flat x := by
+--     rintro ⟨j, x, hj⟩; exact DStep.flat_ne_pair chain hj hi
+--   have hnl : ¬ ∃ j g, chain j = .lam g := by
+--     rintro ⟨j, g, hj⟩; exact DStep.lam_ne_pair chain hj hi
+--   have hp : ∃ i a b, chain i = .pair a b := ⟨i, a, b, hi⟩
+--   have hh : ∀ j, j ≥ hp.choose → ∃ p : ρ × ρ, chain j = .pair p.1 p.2 := by
+--     intro j hj
+--     obtain ⟨a', b', hab⟩ := hp.choose_spec
+--     obtain ⟨a'', b'', hj'⟩ := DStep.chain_pair chain hp.choose hab j hj
+--     exact ⟨(a'', b''), hj'⟩
+--   refine ⟨hp.choose, hh, ?_⟩
+--   unfold DStep.ωSup
+--   rw [dif_neg hnf, dif_neg hnl, dif_pos hp]
+
+-- theorem DStep.ωSup_bot [OmegaCompletePartialOrder ρ]
+--     (chain : Chain (DStep φ ρ)) (hbot : ∀ n, chain n = .bot) :
+--     DStep.ωSup chain = .bot := by
+--   have hnf : ¬ ∃ i x, chain i = .flat x := by
+--     rintro ⟨i, x, hi⟩; rw [hbot i] at hi; simp at hi
+--   have hnl : ¬ ∃ i b, chain i = .lam b := by
+--     rintro ⟨i, b, hi⟩; rw [hbot i] at hi; simp at hi
+--   have hnp : ¬ ∃ i a b, chain i = .pair a b := by
+--     rintro ⟨i, a, b, hi⟩; rw [hbot i] at hi; simp at hi
+--   unfold DStep.ωSup
+--   rw [dif_neg hnf, dif_neg hnl, dif_neg hnp]
+
+-- noncomputable instance [OmegaCompletePartialOrder ρ] :
+--     OmegaCompletePartialOrder (DStep φ ρ) where
+--   ωSup := DStep.ωSup
+--   le_ωSup := by
+--     intro c i
+--     cases hci : c i with
+--     | bot => exact bot_le
+--     | flat x => exact le_of_eq (DStep.ωSup_flat c hci).symm
+--     | lam b =>
+--       obtain ⟨i0, h, heq⟩ := DStep.ωSup_lam c hci
+--       rw [heq]; exact DStep.lamChain_body_le c i0 h hci
+--     | pair a b =>
+--       obtain ⟨i0, h, heq⟩ := DStep.ωSup_pair c hci
+--       rw [heq]; exact DStep.pairChain_le c i0 h hci
+--   ωSup_le := by
+--     intro c x hub
+--     by_cases hb : ∀ n, c n = .bot
+--     · rw [DStep.ωSup_bot c hb]; exact bot_le
+--     · push Not at hb
+--       obtain ⟨i, hi⟩ := hb
+--       cases hci : c i with
+--       | bot => exact (hi hci).elim
+--       | flat xv =>
+--         rw [DStep.ωSup_flat c hci]
+--         have hu := hub i; rw [hci] at hu; exact hu
+--       | lam b =>
+--         obtain ⟨i0, h, heq⟩ := DStep.ωSup_lam c hci
+--         rw [heq]
+--         have hu := hub i; rw [hci] at hu
+--         obtain ⟨g, hxg⟩ := DStep.eq_lam_of_lam_le hu
+--         subst hxg
+--         show OmegaCompletePartialOrder.ωSup (DStep.lamChain c i0 h) ≤ g
+--         apply DStep.lamChain_ωSup_le c i0 h
+--         intro k bk hk
+--         have huk := hub k; rw [hk] at huk; exact huk
+--       | pair a b =>
+--         obtain ⟨i0, h, heq⟩ := DStep.ωSup_pair c hci
+--         rw [heq]
+--         have hu := hub i; rw [hci] at hu
+--         obtain ⟨a', b', hxg⟩ := DStep.eq_pair_of_pair_le hu
+--         subst hxg
+--         show (OmegaCompletePartialOrder.ωSup (DStep.pairChain c i0 h)).1 ≤ a' ∧
+--              (OmegaCompletePartialOrder.ωSup (DStep.pairChain c i0 h)).2 ≤ b'
+--         apply DStep.pairChain_ωSup_le c i0 h
+--         intro k ak bk hk
+--         have huk := hub k; rw [hk] at huk; exact huk
+
+
+
+-- def DStepRaw.is_cont [Preorder ρ] (x : DStepRaw φ ρ) : Prop := match x with
+-- | .bot     => True
+-- | .lam b   => ScottContinuous b
+-- | .pair .. => True
+-- | .flat .. => True
+
+-- def DStep (φ : Type υ) (ρ : Type γ) [Preorder ρ] :=
+--   { x : DStepRaw φ ρ // DStepRaw.is_cont x }
+
+-- instance [Preorder ρ] : Preorder (DStep φ ρ) where
+--   le x y := x.val ≤ y.val
+--   le_refl := by
+--     rintro ⟨x, _⟩; simp
+--   le_trans := by
+--     rintro ⟨x, _⟩ ⟨y, _⟩ ⟨z, _⟩ hxy hyz
+--     simp at hxy hyz
+--     exact le_trans hxy hyz
+
+-- inductive DZero : Type υ
+-- | bot
+
+-- instance : Preorder DZero where
+--   le x y := True
+--   le_refl := by
+--     intro x
+--     cases x
+--     trivial
+--   le_trans := by
+--     intro x y z hxy hyz
+--     cases x; cases y; cases z
+--     trivial
+
+-- mutual
+
+-- instance : Preorder (D φ n) where
+--   le x y := x.val ≤ y.val
+--   le_refl := by sorry
+--   le_trans := by sorry
+
+-- def D (φ : Type υ) : Nat → Type _
+-- | 0     => DZero
+-- | n + 1 => DStep φ (D φ n)
+
+-- end
+
+-- -- instance [PartialOrder ρ] : PartialOrder (DStepRaw φ ρ) where
+-- --   le_refl := by
+-- --     intro x; cases x <;> simp_all [LE.le]
+
+-- --   le_trans := by
+-- --     intro x y z hxy hyz
+-- --     cases x <;> cases y <;> cases z
+-- --     all_goals try assumption
+-- --     all_goals simp_all [LE.le]
+-- --     case lam.lam.lam =>
+-- --       intro x;  exact le_trans (hxy x) (hyz x)
+-- --     case pair.pair.pair =>
+-- --       constructor
+-- --       · exact le_trans hxy.1 hyz.1
+-- --       · exact le_trans hxy.2 hyz.2
+
+-- --   le_antisymm := by
+-- --     intro x y hxy hyx
+-- --     cases x <;> cases y
+-- --     all_goals simp_all [LE.le]
+-- --     case lam.lam =>
+-- --       funext x; exact le_antisymm (hxy x) (hyx x)
+-- --     case pair.pair =>
+-- --       constructor
+-- --       · exact le_antisymm hxy.1 hyx.1
+-- --       · exact le_antisymm hxy.2 hyx.2
+
+-- -- instance [LE ρ] : OrderBot (DStepRaw φ ρ) where
+-- --   bot := .bot
+-- --   bot_le := by intro x; cases x <;> simp_all [LE.le]
+
+-- -- inductive DZero : Type υ
+-- -- | bot
+
+-- -- def D (φ : Type υ) : Nat → Type _
+-- -- | 0     => DZero
+-- -- | n + 1 => DStep φ (D φ n)
+
+-- -- @[match_pattern]
+-- -- def D.bot : D φ n := match n with
+-- -- | 0     => DZero.bot
+-- -- | _ + 1 => DStep.bot
+-- -- instance : Bot (D φ n) := ⟨.bot⟩
+
+-- -- @[match_pattern]
+-- -- def D.lam (b : D φ n → D φ n) : D φ (n + 1)
+-- --   := DStep.lam b
+
+-- -- @[match_pattern]
+-- -- def D.pair (a b : D φ n) : D φ (n + 1)
+-- --   := DStep.pair a b
+
+-- -- @[match_pattern]
+-- -- def D.flat (x :φ) : D φ (n + 1)
+-- --   := DStep.flat x
+
+-- -- def D.le (x y : D φ n) : Prop := match n, x, y with
+-- -- | 0,     .bot,        .bot      => True
+-- -- | _ + 1, .bot,        _         => True
+-- -- | _ + 1, .lam b,      .lam b'   => ∀ x, D.le (b x) (b' x)
+-- -- | _ + 1, .pair a b, .pair a' b' => D.le a a' ∧ D.le b b'
+-- -- | _ + 1, .flat x,     .flat y   => x = y
+-- -- | _,     _,           _         => False
+-- -- instance : LE (D φ n) := ⟨D.le⟩
+
+-- -- instance : PartialOrder (D φ n) where
+-- --   le_refl := by
+-- --     intro x; induction n <;> cases x;
+-- --     all_goals simp_all [LE.le, D.le]
+
+-- --   le_trans := by
+-- --     intro x y z hxy hyz
+-- --     induction n <;> cases x <;> cases y <;> cases z
+-- --     all_goals try assumption
+-- --     all_goals simp_all [LE.le, D.le]
+-- --     case succ.lam.lam.lam ih =>
+-- --       intro x
+-- --       exact ih _ _ _ (hxy x) (hyz x)
+-- --     case succ.pair.pair.pair ih =>
+-- --       constructor
+-- --       · exact ih _ _ _ hxy.1 hyz.1
+-- --       · exact ih _ _ _ hxy.2 hyz.2
+
+-- --   le_antisymm := by
+-- --     intro x y hxy hyx
+-- --     induction n <;> cases x <;> cases y
+-- --     all_goals simp_all [LE.le, D.le]
+-- --     case succ.lam.lam ih =>
+-- --       congr; funext x
+-- --       exact ih _ _ (hxy x) (hyx x)
+-- --     case succ.pair.pair ih =>
+-- --       congr
+-- --       · exact ih _ _ hxy.1 hyx.1
+-- --       · exact ih _ _ hxy.2 hyx.2
+
+-- -- instance : OrderBot (D φ n) where
+-- --   bot_le := by
+-- --     intro x; induction n
+-- --     cases x; all_goals simp_all [LE.le, D.le]
+
+
+
+-- import SPos.Sem4.Domains.Approximation
+-- import SPos.Sem4.Domains.Projection
+-- import SPos.Sem4.Domains.DInf
+-- 
+-- namespace ScottContinuousF
+-- 
+-- 
+-- protected def id [Preorder α] : α →ₛ α := ⟨_root_.id, ScottContinuous.id⟩
+-- 
+-- protected def comp [Preorder α] [Preorder β] [Preorder γ] (g : β →ₛ γ) (f : α →ₛ β) : α →ₛ γ :=
+--   ⟨fun x => g (f x), by fun_prop⟩
+-- 
+-- @[simp] theorem id_apply [Preorder α] (x : α) : (ScottContinuousF.id : α →ₛ α) x = x := rfl
+-- 
+-- @[simp] theorem comp_apply [Preorder α] [Preorder β] [Preorder γ]
+--     (g : β →ₛ γ) (f : α →ₛ β) (x : α) : g.comp f x = g (f x) := rfl
+-- 
+-- end ScottContinuousF
+-- 
+-- 
+-- theorem Approx.imap_id [CompletePartialOrder ρ] (x : Approx ρ) :
+--     Approx.imap (ScottContinuousF.id) (ScottContinuousF.id) x = x := by
+--   cases x with
+--   | bot => rfl
+--   | op t v w =>
+--     refine Approx.op_ext (List.Vector.ext fun i => ?_) (List.Vector.ext fun j => ?_)
+--     · simp
+--     · simp only [List.Vector.get_map]
+--       exact DFunLike.ext _ _ fun y => by simp
+-- 
+-- theorem Approx.imap_congr [CompletePartialOrder ρ] [CompletePartialOrder σ]
+--     {f f' : ρ →ₛ σ} {g g' : σ →ₛ ρ} (hf : f = f') (hg : g = g') :
+--     Approx.imap f g = Approx.imap f' g' := by rw [hf, hg]
+-- 
+-- theorem Approx.imap_comp [CompletePartialOrder ρ] [CompletePartialOrder σ] [CompletePartialOrder τ]
+--     (f : σ →ₛ τ) (g : τ →ₛ σ) (f' : ρ →ₛ σ) (g' : σ →ₛ ρ) (x : Approx ρ) :
+--     Approx.imap f g (Approx.imap f' g' x) = Approx.imap (f.comp f') (g'.comp g) x := by
+--   cases x with
+--   | bot => rfl
+--   | op t v w =>
+--     refine Approx.op_ext (List.Vector.ext fun i => ?_) (List.Vector.ext fun j => ?_)
+--     · simp
+--     · simp only [List.Vector.get_map]
+--       exact DFunLike.ext _ _ fun y => by simp
+-- 
+-- 
+-- noncomputable def D.transZero : (m : Nat) → (D.{u} 0 →ₛ D.{u} m) × (D.{u} m →ₛ D.{u} 0)
+--   | 0     => (ScottContinuousF.id, ScottContinuousF.id)
+--   | m + 1 => (D.up.comp (D.transZero m).1, (D.transZero m).2.comp D.down)
+-- 
+-- noncomputable def D.transPair : (n m : Nat) → (D.{u} n →ₛ D.{u} m) × (D.{u} m →ₛ D.{u} n)
+--   | 0,     m     => D.transZero m
+--   | n + 1, 0     => ((D.transPair n 0).1.comp D.down, D.up.comp (D.transPair n 0).2)
+--   | n + 1, m + 1 => (Approx.imap (D.transPair n m).1 (D.transPair n m).2,
+--                      Approx.imap (D.transPair n m).2 (D.transPair n m).1)
+-- 
+-- noncomputable def D.trans (n m : Nat) : D.{u} n →ₛ D.{u} m := (D.transPair.{u} n m).1
+-- 
+-- theorem D.transPair_symm : ∀ (n m : Nat),
+--     (D.transPair.{u} n m).2 = (D.transPair.{u} m n).1 ∧
+--       (D.transPair.{u} n m).1 = (D.transPair.{u} m n).2
+--   | 0,     0     => ⟨rfl, rfl⟩
+--   | 0,     m + 1 => by
+--       obtain ⟨h1, h2⟩ := D.transPair_symm 0 m
+--       simp only [D.transPair, D.transZero] at h1 h2 ⊢
+--       exact ⟨by rw [h1], by rw [h2]⟩
+--   | n + 1, 0     => by
+--       obtain ⟨h1, h2⟩ := D.transPair_symm n 0
+--       simp only [D.transPair, D.transZero] at h1 h2 ⊢
+--       exact ⟨by rw [h1], by rw [h2]⟩
+--   | n + 1, m + 1 => by
+--       obtain ⟨h1, h2⟩ := D.transPair_symm n m
+--       refine ⟨?_, ?_⟩
+--       · simp only [D.transPair, h1]
+--         exact congrArg _ h2
+--       · simp only [D.transPair, h2]
+--         exact congrArg _ h1
+-- 
+-- theorem D.transPair_snd (n m : Nat) : (D.transPair.{u} n m).2 = D.trans.{u} m n :=
+--   (D.transPair_symm.{u} n m).1
+-- 
+-- @[simp] theorem D.trans_zero_zero : D.trans 0 0 = ScottContinuousF.id := rfl
+-- 
+-- theorem D.trans_zero_succ (m : Nat) : D.trans 0 (m + 1) = D.up.comp (D.trans 0 m) := rfl
+-- 
+-- theorem D.trans_succ_zero (n : Nat) : D.trans (n + 1) 0 = (D.trans n 0).comp D.down := rfl
+-- 
+-- theorem D.trans_succ_succ (n m : Nat) :
+--     D.trans (n + 1) (m + 1) = Approx.imap (D.trans n m) (D.trans m n) := by
+--   show Approx.imap (D.transPair n m).1 (D.transPair n m).2 = _
+--   rw [D.transPair_snd n m]
+--   rfl
+-- 
+-- 
+-- noncomputable section
+-- 
+-- namespace Dinf
+-- 
+-- noncomputable def truncSeq (z : D∞) (n : Nat) : (m : Nat) → D m
+--   | 0     => z.approx 0
+--   | m + 1 => if m + 1 ≤ n then z.approx (m + 1) else D.up (truncSeq z n m)
+-- 
+-- theorem truncSeq_of_le (z : D∞) {n m : Nat} (h : m ≤ n) : truncSeq z n m = z.approx m := by
+--   cases m with
+--   | zero => rfl
+--   | succ k => simp only [truncSeq, if_pos h]
+-- 
+-- theorem truncSeq_coh (z : D∞) (n m : Nat) :
+--     D.down (truncSeq z n (m + 1)) = truncSeq z n m := by
+--   simp only [truncSeq]
+--   by_cases h : m + 1 ≤ n
+--   · rw [if_pos h, z.coh m, truncSeq_of_le z (Nat.le_of_succ_le h)]
+--   · rw [if_neg h, D.down_up]
+-- 
+-- noncomputable def trunc (z : D∞) (n : Nat) : D∞ := ⟨truncSeq z n, truncSeq_coh z n⟩
+-- 
+-- @[simp] theorem trunc_approx (z : D∞) (n m : Nat) :
+--     (trunc z n).approx m = truncSeq z n m := rfl
+-- 
+-- theorem trunc_approx_of_le (z : D∞) {n m : Nat} (h : m ≤ n) :
+--     (trunc z n).approx m = z.approx m := truncSeq_of_le z h
+-- 
+-- theorem trunc_le (z : D∞) (n : Nat) : trunc z n ≤ z := by
+--   intro m
+--   induction m with
+--   | zero => exact le_refl _
+--   | succ k ih =>
+--     show truncSeq z n (k + 1) ≤ z.approx (k + 1)
+--     by_cases h : k + 1 ≤ n
+--     · rw [truncSeq_of_le z h]
+--     · simp only [truncSeq, if_neg h]
+--       calc D.up (truncSeq z n k) ≤ D.up (z.approx k) := D.up.scott_continuous.monotone ih
+--         _ = D.up (D.down (z.approx (k + 1))) := by rw [z.coh k]
+--         _ ≤ z.approx (k + 1) := D.up_down k _
+-- 
+-- theorem trunc_le_succ (z : D∞) (n : Nat) : trunc z n ≤ trunc z (n + 1) := by
+--   intro m
+--   induction m with
+--   | zero => exact le_refl _
+--   | succ k ih =>
+--     show truncSeq z n (k + 1) ≤ truncSeq z (n + 1) (k + 1)
+--     by_cases h : k + 1 ≤ n
+--     · rw [truncSeq_of_le z h, truncSeq_of_le z (Nat.le_succ_of_le h)]
+--     · by_cases h2 : k + 1 ≤ n + 1
+--       · have hk : n = k := by omega
+--         subst hk
+--         simp only [truncSeq, if_neg h, if_pos h2]
+--         rw [truncSeq_of_le z (le_refl n)]
+--         calc D.up (z.approx n) = D.up (D.down (z.approx (n + 1))) := by rw [z.coh n]
+--           _ ≤ z.approx (n + 1) := D.up_down n _
+--       · simp only [truncSeq, if_neg h, if_neg h2]
+--         exact D.up.scott_continuous.monotone ih
+-- 
+-- theorem trunc_mono (z : D∞) : Monotone (trunc z) :=
+--   monotone_nat_of_le_succ (trunc_le_succ z)
+-- 
+-- theorem sSup_trunc (z : D∞) : sSup (Set.range (trunc z)) = z := by
+--   have hdir : DirectedOn (· ≤ ·) (Set.range (trunc z)) :=
+--     (trunc_mono z).directed_le.directedOn_range
+--   have hne : (Set.range (trunc z)).Nonempty := Set.range_nonempty _
+--   refine Dinf.ext fun m => ?_
+--   rw [Dinf.sSup_approx hdir hne]
+--   refine ((Dinf.directedOn_approx hdir m).isLUB_sSup).unique ?_
+--   constructor
+--   · rintro _ ⟨_, ⟨n, rfl⟩, rfl⟩
+--     exact trunc_le z n m
+--   · intro u hu
+--     exact hu ⟨trunc z m, ⟨m, rfl⟩, trunc_approx_of_le z (le_refl m)⟩
+-- 
+-- end Dinf
+-- 
+-- end
