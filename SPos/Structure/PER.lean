@@ -29,6 +29,11 @@ theorem PER.refl_left (h : a ~ b ∈ₚ R) : a ~ a ∈ₚ R :=
 theorem PER.refl_right (h : a ~ b ∈ₚ R) : b ~ b ∈ₚ R :=
   R.trans (R.symm h) h
 
+def PER.comap (f : α → β) (R : PER β) : PER α where
+  rel a b := (f a) ~ (f b) ∈ₚ R
+  sym := ⟨fun _ _ h => R.symm h⟩
+  tra := ⟨fun _ _ _ h₁ h₂ => R.trans h₁ h₂⟩
+
 def PER.empty (D : Type u) : PER D where
   rel _ _ := False
   sym := by constructor; simp
@@ -38,6 +43,16 @@ def PER.diag (D : Type u) : PER D where
   rel a b := a = b
   sym := by constructor; simp
   tra := by constructor; simp
+
+def PER.top (D : Type u) : PER D where
+  rel _ _ := True
+  sym := by constructor; simp
+  tra := by constructor; simp
+
+def PER.inter (R : ι → PER α) : PER α where
+  rel a b := ∀ i, (a ~ b ∈ₚ R i)
+  sym := ⟨fun _ _ h i => (R i).symm (h i)⟩
+  tra := ⟨fun _ _ _ h₁ h₂ i => (R i).trans (h₁ i) (h₂ i)⟩
 
 structure PERResp (R : PER D) (E : (x : D) → PER (M x)) where
   toFun : (x : D) → M x
@@ -73,13 +88,6 @@ theorem PERRespND.mk_apply (f : D → S)
 theorem PER.ext {R S : PER D} (h : R.rel = S.rel) : R = S := by
   cases R; cases S; cases h; simp
 
-/-! ### The inclusion order on PERs
-
-PERs over `D` ordered by inclusion of their relations. Arbitrary intersections
-of PERs are PERs, so least fixed points of monotone operators exist by
-Knaster–Tarski; `PER.muFix` is the least-prefixed-point formula directly.
--/
-
 instance : PartialOrder (PER D) where
   le R S := ∀ ⦃a b : D⦄, (a ~ b ∈ₚ R) → (a ~ b ∈ₚ S)
   le_refl _ _ _ h := h
@@ -90,8 +98,6 @@ instance : PartialOrder (PER D) where
 theorem PER.le_def {R S : PER D} : R ≤ S ↔ ∀ ⦃a b : D⦄, (a ~ b ∈ₚ R) → (a ~ b ∈ₚ S) :=
   Iff.rfl
 
--- The intersection of all prefixed points of `G`. For monotone `G` this is the
--- least fixed point (Knaster–Tarski); it is well-defined for arbitrary `G`.
 def PER.muFix (G : PER D → PER D) : PER D where
   rel a b := ∀ X : PER D, G X ≤ X → (a ~ b ∈ₚ X)
   sym := ⟨fun _ _ h X hX => X.symm (h X hX)⟩
@@ -109,7 +115,6 @@ theorem PER.muFix_congr {G G' : PER D → PER D} (h : ∀ X, G X = G' X) :
   apply PER.ext; funext a b; apply propext
   exact ⟨fun hf X hX => hf X (h X ▸ hX), fun hf X hX => hf X (h X ▸ hX)⟩
 
--- Knaster–Tarski: for monotone `G`, `muFix G` is a fixed point.
 theorem PER.muFix_prefixed {G : PER D → PER D} (hG : Monotone G) :
     G (PER.muFix G) ≤ PER.muFix G :=
   fun _ _ hab _ hX => hX (hG (PER.muFix_le hX) hab)

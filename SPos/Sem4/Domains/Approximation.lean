@@ -323,3 +323,21 @@ def D.mu (τ : D n →ₛ D n) : D (n + 1) :=
 @[match_pattern]
 def D.roll (t : D n) : D (n + 1) :=
   .op Tag.roll ⟨[t], by simp⟩ .nil
+
+theorem D.true_ne_false : (D.true : D (n + 1)) ≠ D.false := by
+  unfold D.true D.false; intro h; injection h with ht; exact absurd ht (by decide)
+
+theorem D.bot_ne_true : (⊥ : D (n + 1)) ≠ D.true := by
+  intro h; exact (h ▸ le_refl (D.true : D (n + 1)) : (D.true : D (n + 1)) ≤ ⊥)
+
+theorem D.bot_ne_false : (⊥ : D (n + 1)) ≠ D.false := by
+  intro h; exact (h ▸ le_refl (D.false : D (n + 1)) : (D.false : D (n + 1)) ≤ ⊥)
+
+theorem D.lam_inj {b b' : D n →ₛ D n} (h : D.lam b = D.lam b') : b = b' := by
+  unfold D.lam at h; injection h with _ _ hw; simpa [Subtype.ext_iff] using hw
+
+theorem D.pair_inj {v w v' w' : D n} (h : D.pair v w = D.pair v' w') : v = v' ∧ w = w' := by
+  unfold D.pair at h; injection h with _ hv; simpa [Subtype.ext_iff] using hv
+
+theorem D.roll_inj {t t' : D n} (h : D.roll t = D.roll t') : t = t' := by
+  unfold D.roll at h; injection h with _ hv; simpa [Subtype.ext_iff] using hv

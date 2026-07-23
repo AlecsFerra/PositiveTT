@@ -63,7 +63,8 @@ theorem sSup_approx {s : Set D∞} (hs : DirectedOn (· ≤ ·) s) (hne : s.None
 instance : CompletePartialOrder D∞ where
   lubOfDirected s hs := by
     rcases s.eq_empty_or_nonempty with rfl | hne
-    · refine ⟨fun a ha => ha.elim, fun u _ => ?_⟩
+    · refine ⟨fun a ha => ha.elim, ?_⟩
+      intro u _
       have hbot : (sSup (∅ : Set D∞)) = ⊥ := dif_neg (by simp)
       simp [hbot]
     · constructor
@@ -94,10 +95,6 @@ def Dinf.emb : D n →ₛ D∞ := by
       refine ((D.shift n m).scott_continuous hne hdir ha).2 ?_
       rintro _ ⟨x, hx, rfl⟩
       exact hu (Set.mem_image_of_mem _ hx) m
-
-@[simp]
-theorem Dinf.emb_approx {n : Nat} (x : D n) (k : Nat) :
-    (Dinf.emb x).approx k = D.shift n k x := rfl
 
 theorem Dinf.emb_up {m : Nat} (x : D m) : Dinf.emb (D.up x) = Dinf.emb x := by
   apply Dinf.ext; intro k
@@ -232,10 +229,10 @@ def Dinf.roll : D∞ →ₛ D∞ := by
       simp [Fin.fin_one_eq_zero i, List.Vector.head]
     · intro j x; exact j.elim0
 
-@[match_pattern] abbrev Dinf.bool  : D∞ := Dinf.op .bool  .nil .nil
-@[match_pattern] abbrev Dinf.true  : D∞ := Dinf.op .true  .nil .nil
-@[match_pattern] abbrev Dinf.false : D∞ := Dinf.op .false .nil .nil
-@[match_pattern] abbrev Dinf.refl  : D∞ := Dinf.op .refl  .nil .nil
+@[match_pattern] def Dinf.bool  : D∞ := Dinf.op .bool  .nil .nil
+@[match_pattern] def Dinf.true  : D∞ := Dinf.op .true  .nil .nil
+@[match_pattern] def Dinf.false : D∞ := Dinf.op .false .nil .nil
+@[match_pattern] def Dinf.refl  : D∞ := Dinf.op .refl  .nil .nil
 
 def Dinf.tagOf (x : D∞) : Option Tag :=
   match x.approx 1 with
@@ -243,7 +240,8 @@ def Dinf.tagOf (x : D∞) : Option Tag :=
   | .op t _ _ => some t
 
 @[simp]
-theorem Dinf.tagOf_op {v : List.Vector D∞ t.arity.1} {w} : (Dinf.op t v w).tagOf = some t := rfl
+theorem Dinf.tagOf_op {v : List.Vector D∞ t.arity.1} {w}
+  : (Dinf.op t v w).tagOf = some t := rfl
 
 @[simp]
 theorem Dinf.tagOf_bot : (⊥ : D∞).tagOf = none := rfl
@@ -495,9 +493,14 @@ def Dinf.ite : D∞ →ₛ D∞ →ₛ D∞ →ₛ D∞ := by
     apply ScottContinuousF.of_apply₂; intro f
     apply Dinf.scottContinuous_ite <;> fun_prop
 
-@[simp] theorem Dinf.ite_true  : Dinf.ite Dinf.true  t f = t := by simp [Dinf.ite]
-@[simp] theorem Dinf.ite_false : Dinf.ite Dinf.false t f = f := by simp [Dinf.ite]
-@[simp] theorem Dinf.ite_bot   : Dinf.ite ⊥ t f = ⊥ := by simp [Dinf.ite]
+@[simp]
+theorem Dinf.ite_true  : Dinf.ite Dinf.true  t f = t := by
+  simp [Dinf.true, Dinf.ite]
+@[simp]
+theorem Dinf.ite_false : Dinf.ite Dinf.false t f = f := by
+  simp [Dinf.false, Dinf.ite]
+@[simp]
+theorem Dinf.ite_bot   : Dinf.ite ⊥ t f = ⊥ := by simp [Dinf.ite]
 
 theorem Dinf.ite_eq_bot (h₁ : b.tagOf ≠ some .true) (h₂ : b.tagOf ≠ some .false) :
     Dinf.ite b t f = ⊥ := by simp [Dinf.ite, h₁, h₂]
@@ -532,6 +535,10 @@ theorem Dinf.emb_approx_le (x : D∞) (n : Nat) : Dinf.emb (x.approx n) ≤ x :=
   · rw [Dinf.shift_approx_of_le x h]
   · rw [← Dinf.shift_approx_of_le x h]
     exact D.shift_up_down_le h _
+
+@[simp]
+theorem Dinf.emb_approx {n : Nat} (x : D n) (k : Nat) :
+    (Dinf.emb x).approx k = D.shift n k x := rfl
 
 theorem Dinf.isLUB_emb_approx (x : D∞) :
     IsLUB (Set.range fun n => Dinf.emb (x.approx n)) x := by
@@ -631,34 +638,46 @@ def Dinf.projW (t : Tag) (j : Fin t.arity.2) : D∞ →ₛ D∞ →ₛ D∞ := b
     apply Dinf.scottContinuous_projW <;> fun_prop
 
 
-theorem Dinf.projW_lam (b : D∞ →ₛ D∞) (a : D∞) :
-    Dinf.projW .lam ⟨0, by simp⟩ (Dinf.lam b) a = b a := by
-  have hstage : Set.range (Dinf.appAt .lam ⟨0, by simp⟩ (Dinf.lam b) a)
-      = Set.range (fun n => Dinf.emb ((b (Dinf.emb (a.approx n))).approx n)) := rfl
+theorem Dinf.projW_op (t : Tag) (j : Fin t.arity.2) {v : List.Vector D∞ t.arity.1}
+    {w : List.Vector (D∞ →ₛ D∞) t.arity.2} (a : D∞) :
+    Dinf.projW t j (Dinf.op t v w) a = (w.get j) a := by
+  have hstage : Set.range (Dinf.appAt t j (Dinf.op t v w) a)
+      = Set.range (fun n => Dinf.emb (((w.get j) (Dinf.emb (a.approx n))).approx n)) := by
+    refine congrArg Set.range (funext fun n => ?_)
+    simp [Dinf.appAt, Dinf.op, Approx.getW, Approx.get'_op, List.Vector.get_map]
   have hdir := directedOn_range_of_monotone
-    (Dinf.appAt_monotone .lam ⟨0, by simp⟩ (Dinf.lam b) a)
-  have hb : IsLUB (Set.range fun n => b (Dinf.emb (a.approx n))) (b a) := by
-    have := b.scott_continuous (Set.range_nonempty _) (Dinf.directedOn_emb_approx a)
+    (Dinf.appAt_monotone t j (Dinf.op t v w) a)
+  have hb : IsLUB (Set.range fun n => (w.get j) (Dinf.emb (a.approx n))) ((w.get j) a) := by
+    have := (w.get j).scott_continuous (Set.range_nonempty _) (Dinf.directedOn_emb_approx a)
       (Dinf.isLUB_emb_approx a)
     rwa [← Set.range_comp] at this
-  unfold Dinf.projW
+  show sSup (Set.range (Dinf.appAt t j (Dinf.op t v w) a)) = (w.get j) a
+  rw [hstage] at hdir ⊢
   apply le_antisymm
   · refine hdir.sSup_le ?_
     rintro _ ⟨n, rfl⟩
     exact le_trans (Dinf.emb_approx_le _ n) (hb.1 ⟨n, rfl⟩)
   · refine hb.2 ?_
     rintro _ ⟨n, rfl⟩
-    refine (Dinf.isLUB_emb_approx (b (Dinf.emb (a.approx n)))).2 ?_
+    refine (Dinf.isLUB_emb_approx ((w.get j) (Dinf.emb (a.approx n)))).2 ?_
     rintro _ ⟨m, rfl⟩
     refine le_trans ?_ (hdir.le_sSup ⟨max n m, rfl⟩)
-    show Dinf.emb ((b (Dinf.emb (a.approx n))).approx m)
-       ≤ Dinf.emb ((b (Dinf.emb (a.approx (max n m)))).approx (max n m))
+    show Dinf.emb (((w.get j) (Dinf.emb (a.approx n))).approx m)
+       ≤ Dinf.emb (((w.get j) (Dinf.emb (a.approx (max n m)))).approx (max n m))
     refine le_trans ((Dinf.emb).scott_continuous.monotone ?_)
-      (Dinf.emb_approx_monotone (b (Dinf.emb (a.approx (max n m)))) (le_max_right n m))
-    exact (b.scott_continuous.monotone
+      (Dinf.emb_approx_monotone ((w.get j) (Dinf.emb (a.approx (max n m)))) (le_max_right n m))
+    exact ((w.get j).scott_continuous.monotone
       (Dinf.emb_approx_monotone a (le_max_left n m))) m
+
+theorem Dinf.projW_lam (b : D∞ →ₛ D∞) (a : D∞) :
+    Dinf.projW .lam ⟨0, by simp⟩ (Dinf.lam b) a = b a :=
+  Dinf.projW_op _ _ a
 
 def Dinf.app : D∞ →ₛ D∞ →ₛ D∞ := Dinf.projW .lam ⟨0, by simp⟩
 
-@[simp] theorem Dinf.app_lam (b : D∞ →ₛ D∞) (a : D∞) : Dinf.app (Dinf.lam b) a = b a :=
-  Dinf.projW_lam b a
+instance : CoeFun D∞ (fun _ => D∞ → D∞) where
+  coe x := Dinf.app x
+
+@[simp]
+theorem Dinf.app_lam (b : D∞ →ₛ D∞) (a : D∞)
+  : Dinf.app (Dinf.lam b) a = b a := Dinf.projW_lam b a
