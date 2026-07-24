@@ -37,7 +37,9 @@ import SPos.Sem4.Domains.ScottContinuous
 import SPos.Sem4.Semantics.Eval
 -- import SPos.Sem4.Semantics.Construct
 -- import SPos.Sem4.Semantics.Continuity
--- import SPos.Sem4.Semantics.Decode
+import SPos.Sem4.Semantics.Decode
+-- import SPos.Sem4.Semantics.DecodeRec
+import SPos.Sem4.Semantics.Sound
 -- import SPos.Sem4.Semantics.Elim
 -- import SPos.Sem4.Semantics.Interp
 -- import SPos.Sem4.Semantics.Destruct
