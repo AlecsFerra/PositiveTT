@@ -20,10 +20,10 @@ noncomputable def Tm.eval (t : Tm n) : DEnv n →ₛ D∞ := match t with
 | .pi τ υ          => ƛₛ ρ ↦ Dinf.pi (⟦ τ ⟧ᵈ ρ) (ƛₛ d ↦ ⟦ υ ⟧ᵈ (ρ ∷ d))
 | .sigma τ υ       => ƛₛ ρ ↦ Dinf.sigma (⟦ τ ⟧ᵈ ρ) (ƛₛ d ↦ ⟦ υ ⟧ᵈ (ρ ∷ d))
 | .lam _ b         => ƛₛ ρ ↦ Dinf.lam (ƛₛ d ↦ ⟦ b ⟧ᵈ (ρ ∷ d))
-| .mu B            => ƛₛ ρ ↦ Dinf.mu (ƛₛ d ↦ ⟦ B ⟧ᵈ (ρ ∷ d))
+| .mu B            => ƛₛ ρ ↦ ScottContinuous.lfp (ƛₛ d ↦ ⟦ B ⟧ᵈ (ρ ∷ d))
 | .pair a b        => ƛₛ ρ ↦ Dinf.pair (⟦ a ⟧ᵈ ρ) (⟦ b ⟧ᵈ ρ)
 | .id τ a b        => ƛₛ ρ ↦ Dinf.id (⟦ τ ⟧ᵈ ρ) (⟦ a ⟧ᵈ ρ) (⟦ b ⟧ᵈ ρ)
-| .roll t          => ƛₛ ρ ↦ Dinf.roll (⟦ t ⟧ᵈ ρ)
+| .roll t          => ƛₛ ρ ↦ ⟦ t ⟧ᵈ ρ
 | .refl _ _        => ƛₛ _ ↦ Dinf.refl
 | .bool            => ƛₛ _ ↦ Dinf.bool
 | .true            => ƛₛ _ ↦ Dinf.true
@@ -37,8 +37,7 @@ end
 
 @[simp]
 theorem Tm.eval_app_lam (τ : Tm n) (t : Tm (n + 1)) (ρ : DEnv n) (d : D∞) :
-    (⟦ ƛ τ t ⟧ᵈ ρ) d = ⟦ t ⟧ᵈ (ρ ∷ d) := by
-  simp [Tm.eval]
+    (⟦ ƛ τ t ⟧ᵈ ρ) d = ⟦ t ⟧ᵈ (ρ ∷ d) := by simp [Tm.eval]
 
 def Env.rename (r : Ren m n) (ρ : DEnv n) : DEnv m :=
   fun i => ρ.get (r i.rev)

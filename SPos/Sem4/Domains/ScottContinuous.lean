@@ -212,3 +212,15 @@ theorem ScottContinuous.sSup_range [Preorder α] [CompletePartialOrder β]
     refine ((hg k) hne hd ha).2 ?_
     rintro _ ⟨x, hx, rfl⟩
     exact le_trans ((directedOn_range_of_monotone (hm x)).le_sSup ⟨k, rfl⟩) (hu ⟨x, hx, rfl⟩)
+
+def ScottContinuous.lfp [CompletePartialOrder β] : (β →ₛ β) →ₛ β := by
+  refine ƛₛ[?_] f ↦ sSup $ Set.range (f.to_fun^[·] ⊥)
+  apply ScottContinuous.sSup_range
+  · intro k; induction k <;> simp [Function.iterate_succ_apply']
+    case succ ih =>
+      exact ScottContinuousF.scottContinuous_apply ScottContinuous.id ih
+  · intro f; apply monotone_nat_of_le_succ
+    intro n; induction n
+    case zero => simp
+    case succ n ih =>
+      simpa [Function.iterate_succ_apply'] using f.scott_continuous.monotone ih

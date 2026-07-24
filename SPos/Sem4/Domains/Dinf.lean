@@ -681,3 +681,31 @@ instance : CoeFun D∞ (fun _ => D∞ → D∞) where
 @[simp]
 theorem Dinf.app_lam (b : D∞ →ₛ D∞) (a : D∞)
   : Dinf.app (Dinf.lam b) a = b a := Dinf.projW_lam b a
+
+theorem Dinf.univ_inj (h : Dinf.univ ℓ = Dinf.univ ℓ') : ℓ = ℓ' := by
+  simpa [Dinf.univ, Dinf.tagOf_op] using congrArg Dinf.tagOf h
+
+theorem Dinf.pi_inj {f f' : D∞ →ₛ D∞} (h : Dinf.pi a f = Dinf.pi a' f') :
+    a = a' ∧ f = f' := by
+  refine ⟨?_, ScottContinuousF.ext fun x => ?_⟩
+  · simpa [Dinf.pi, Dinf.projV_op, List.Vector.get] using
+      congrArg (Dinf.projV Tag.pi ⟨0, by simp⟩) h
+  · simpa [Dinf.pi, Dinf.projW_op, List.Vector.get] using
+      congrArg (fun z => Dinf.projW Tag.pi ⟨0, by simp⟩ z x) h
+
+theorem Dinf.sigma_inj {f f' : D∞ →ₛ D∞} (h : Dinf.sigma a f = Dinf.sigma a' f') :
+    a = a' ∧ f = f' := by
+  refine ⟨?_, ScottContinuousF.ext fun x => ?_⟩
+  · simpa [Dinf.sigma, Dinf.projV_op, List.Vector.get] using
+      congrArg (Dinf.projV Tag.sigma ⟨0, by simp⟩) h
+  · simpa [Dinf.sigma, Dinf.projW_op, List.Vector.get] using
+      congrArg (fun z => Dinf.projW Tag.sigma ⟨0, by simp⟩ z x) h
+
+theorem Dinf.id_inj (h : Dinf.id t a b = Dinf.id t' a' b') :
+    t = t' ∧ a = a' ∧ b = b' :=
+  ⟨by simpa [Dinf.id, Dinf.projV_op, List.Vector.get] using
+      congrArg (Dinf.projV Tag.id ⟨0, by simp⟩) h,
+   by simpa [Dinf.id, Dinf.projV_op, List.Vector.get] using
+      congrArg (Dinf.projV Tag.id ⟨1, by simp⟩) h,
+   by simpa [Dinf.id, Dinf.projV_op, List.Vector.get] using
+      congrArg (Dinf.projV Tag.id ⟨2, by simp⟩) h⟩
