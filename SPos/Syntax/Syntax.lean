@@ -9,7 +9,7 @@ inductive Tm : (n : Nat) → Type where
 | pair  : Tm n → Tm n → Tm n
 | fst   : Tm n → Tm n
 | snd   : Tm n → Tm n
--- Booleans (sums are derived from `bool` + `sigma`)
+-- Booleans
 | bool : Tm n
 | true : Tm n
 | false : Tm n
@@ -18,8 +18,7 @@ inductive Tm : (n : Nat) → Type where
 | id   : Tm n → Tm n → Tm n → Tm n
 | refl : Tm n → Tm n → Tm n
 | j    : Tm (n + 2) → Tm n → Tm n → Tm n
--- Inductive types: `mu B` binds the self-reference in its body (which must
--- occur positively), `roll` is the introduction form `B [/ mu B ] → mu B`
+-- Recursive types
 | mu   : Tm (n + 1) → Tm n
 | roll : Tm n → Tm n
 -- Universe
@@ -27,14 +26,14 @@ inductive Tm : (n : Nat) → Type where
 
 prefix:(max - 1) "#" => Tm.var
 
-notation "Π" => Tm.pi
+notation "Π̶" => Tm.pi
 notation "ƛ" => Tm.lam
 infixr:(max - 1) "•" => Tm.app
 
 notation "Σ̶" => Tm.sigma
 notation "⸨" a " , " b "⸩" => Tm.pair a b
-abbrev pr₁ (p : Tm n) : Tm n := Tm.fst p
-abbrev pr₂ (p : Tm n) : Tm n := Tm.snd p
+notation "pr₁" => Tm.fst
+notation "pr₂" => Tm.snd
 
 notation "Id" => Tm.id
 notation "refl" => Tm.refl
@@ -44,9 +43,9 @@ notation "μ" => Tm.mu
 notation "roll" => Tm.roll
 
 notation "𝔹" => Tm.bool
-abbrev tt : Tm n := Tm.true
-abbrev ff : Tm n := Tm.false
-abbrev boolrec (P : Tm (n + 1)) (t f b : Tm n) : Tm n := Tm.boolrec P t f b
+notation "tt" => Tm.true
+notation "ff" => Tm.false
+notation "if" g "with" τ "then" t "else" f => Tm.boolrec τ t f g
 
 prefix:(max - 1) "𝓤" => Tm.u
 

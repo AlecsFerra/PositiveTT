@@ -15,7 +15,7 @@ theorem WfCtx.lookup_wf (hΓ : ⊢ Γ) (hlook : Γ ∋ x ∶ τ) : ∃ ℓ, Γ �
       exact  ⟨ℓ, hτ'.weaken $ hΔ.cons hσ⟩
 
 abbrev PiInv (Γ : Ctx n) (Z : Tm n) : Prop :=
-  ∀ (τ : Tm n) (σ : Tm (n + 1)), Z = Π τ σ →
+  ∀ (τ : Tm n) (σ : Tm (n + 1)), Z = Π̶ τ σ →
     ∃ (τ' : Tm n) (ℓ₁ ℓ₂ : Nat), (Γ ⊢ τ' ≡ τ ∶ 𝓤 ℓ₁) ∧ (Γ ∷ τ' ⊢ σ ≡ σ ∶ 𝓤 ℓ₂)
 
 abbrev SigmaInv (Γ : Ctx n) (Z : Tm n) : Prop :=
@@ -73,7 +73,7 @@ theorem DefEq.inv_aux (h : Γ ⊢ t₁ ≡ t₂ ∶ τ)
       idInv_subst1 iht.2.2.1 ihm.2.2.1 hm⟩
   all_goals grind (instances := 3500)
 
-theorem DefEq.pi_inv {σ : Tm (n + 1)} (h : Γ ⊢ X ≡ Y ∶ υ) (heq : X = Π τ₁ σ ∨ Y = Π τ₁ σ) :
+theorem DefEq.pi_inv {σ : Tm (n + 1)} (h : Γ ⊢ X ≡ Y ∶ υ) (heq : X = Π̶ τ₁ σ ∨ Y = Π̶ τ₁ σ) :
     ∃ (τ₂ : Tm n) (ℓ₁ ℓ₂ : Nat), (Γ ⊢ τ₂ ≡ τ₁ ∶ 𝓤 ℓ₁) ∧ (Γ ∷ τ₂ ⊢ σ ≡ σ ∶ 𝓤 ℓ₂) :=
   heq.elim (fun h' => h.inv_aux.1 _ _ h') (fun h' => h.inv_aux.2.2.2.1 _ _ h')
 

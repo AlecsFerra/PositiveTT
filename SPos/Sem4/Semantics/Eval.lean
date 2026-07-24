@@ -15,24 +15,24 @@ set_option hygiene false
 
 notation:max "⟦" t "⟧ᵈ" => Tm.eval t
 noncomputable def Tm.eval (t : Tm n) : DEnv n →ₛ D∞ := match t with
-| .var i           => ƛₛ ρ ↦ ρ.get i
-| .u ℓ             => ƛₛ _ ↦ Dinf.univ ℓ
-| .pi τ υ          => ƛₛ ρ ↦ Dinf.pi (⟦ τ ⟧ᵈ ρ) (ƛₛ d ↦ ⟦ υ ⟧ᵈ (ρ ∷ d))
-| .sigma τ υ       => ƛₛ ρ ↦ Dinf.sigma (⟦ τ ⟧ᵈ ρ) (ƛₛ d ↦ ⟦ υ ⟧ᵈ (ρ ∷ d))
-| .lam _ b         => ƛₛ ρ ↦ Dinf.lam (ƛₛ d ↦ ⟦ b ⟧ᵈ (ρ ∷ d))
-| .mu B            => ƛₛ ρ ↦ Dinf.mu (ƛₛ d ↦ ⟦ B ⟧ᵈ (ρ ∷ d))
-| .pair a b        => ƛₛ ρ ↦ Dinf.pair (⟦ a ⟧ᵈ ρ) (⟦ b ⟧ᵈ ρ)
-| .id τ a b        => ƛₛ ρ ↦ Dinf.id (⟦ τ ⟧ᵈ ρ) (⟦ a ⟧ᵈ ρ) (⟦ b ⟧ᵈ ρ)
-| .roll t          => ƛₛ ρ ↦ Dinf.roll (⟦ t ⟧ᵈ ρ)
-| .refl _ _        => ƛₛ _ ↦ Dinf.refl
-| .bool            => ƛₛ _ ↦ Dinf.bool
-| .true            => ƛₛ _ ↦ Dinf.true
-| .false           => ƛₛ _ ↦ Dinf.false
-| .boolrec _ t f b => ƛₛ ρ ↦ Dinf.ite (⟦ b ⟧ᵈ ρ) (⟦ t ⟧ᵈ ρ) (⟦ f ⟧ᵈ ρ)
-| .j _ d _         => ƛₛ ρ ↦ d.eval ρ
-| .fst p           => ƛₛ ρ ↦ Dinf.fst (⟦ p ⟧ᵈ ρ)
-| .snd p           => ƛₛ ρ ↦ Dinf.snd (⟦ p ⟧ᵈ ρ)
-| .app t₁ t₂       => ƛₛ ρ ↦ (⟦ t₁ ⟧ᵈ ρ) (⟦ t₂ ⟧ᵈ ρ)
+| # i                       => ƛₛ ρ ↦ ρ.get i
+| 𝓤 ℓ                       => ƛₛ _ ↦ Dinf.univ ℓ
+| Π̶ τ υ                     => ƛₛ ρ ↦ Dinf.pi (⟦ τ ⟧ᵈ ρ) (ƛₛ d ↦ ⟦ υ ⟧ᵈ (ρ ∷ d))
+| Σ̶ τ υ                     => ƛₛ ρ ↦ Dinf.sigma (⟦ τ ⟧ᵈ ρ) (ƛₛ d ↦ ⟦ υ ⟧ᵈ (ρ ∷ d))
+| ƛ τ t                     => ƛₛ ρ ↦ Dinf.lam (ƛₛ d ↦ ⟦ t ⟧ᵈ (ρ ∷ d))
+| μ B                       => ƛₛ ρ ↦ Dinf.mu (ƛₛ d ↦ ⟦ B ⟧ᵈ (ρ ∷ d))
+| ⸨ a , b ⸩                 => ƛₛ ρ ↦ Dinf.pair (⟦ a ⟧ᵈ ρ) (⟦ b ⟧ᵈ ρ)
+| Id τ a b                  => ƛₛ ρ ↦ Dinf.id (⟦ τ ⟧ᵈ ρ) (⟦ a ⟧ᵈ ρ) (⟦ b ⟧ᵈ ρ)
+| roll t                    => ƛₛ ρ ↦ Dinf.roll (⟦ t ⟧ᵈ ρ)
+| refl _ _                  => ƛₛ _ ↦ Dinf.refl
+| 𝔹                         => ƛₛ _ ↦ Dinf.bool
+| tt                        => ƛₛ _ ↦ Dinf.true
+| ff                        => ƛₛ _ ↦ Dinf.false
+| if g with τ then t else f => ƛₛ ρ ↦ Dinf.ite (⟦ g ⟧ᵈ ρ) (⟦ t ⟧ᵈ ρ) (⟦ f ⟧ᵈ ρ)
+| J _ d _                   => ƛₛ ρ ↦ d.eval ρ
+| pr₁ p                     => ƛₛ ρ ↦ Dinf.fst (⟦ p ⟧ᵈ ρ)
+| pr₂ p                     => ƛₛ ρ ↦ Dinf.snd (⟦ p ⟧ᵈ ρ)
+| app t₁ t₂                 => ƛₛ ρ ↦ (⟦ t₁ ⟧ᵈ ρ) (⟦ t₂ ⟧ᵈ ρ)
 end
 
 @[simp]
