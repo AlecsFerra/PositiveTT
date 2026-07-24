@@ -40,6 +40,8 @@ import SPos.Sem4.Semantics.Eval
 import SPos.Sem4.Semantics.Decode
 -- import SPos.Sem4.Semantics.DecodeRec
 import SPos.Sem4.Semantics.Sound
+import SPos.Sem4.Semantics.RecPER
+import SPos.Sem4.Semantics.RecInterp
 -- import SPos.Sem4.Semantics.Elim
 -- import SPos.Sem4.Semantics.Interp
 -- import SPos.Sem4.Semantics.Destruct
