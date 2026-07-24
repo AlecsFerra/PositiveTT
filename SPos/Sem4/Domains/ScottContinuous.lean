@@ -224,3 +224,26 @@ def ScottContinuous.lfp [CompletePartialOrder β] : (β →ₛ β) →ₛ β := 
     case zero => simp
     case succ n ih =>
       simpa [Function.iterate_succ_apply'] using f.scott_continuous.monotone ih
+
+theorem ScottContinuous.lfp_fix [CompletePartialOrder β] (f : β →ₛ β) :
+    f (ScottContinuous.lfp f) = ScottContinuous.lfp f := by
+  set c : Nat → β := fun n => f.to_fun^[n] ⊥ with hc
+  have hstep : ∀ n, c (n + 1) = f.to_fun (c n) := fun n => Function.iterate_succ_apply' _ _ _
+  have hmono : Monotone c := by
+    apply monotone_nat_of_le_succ
+    intro n; induction n
+    case zero => exact bot_le
+    case succ m ih => rw [hstep m, hstep (m + 1)]; exact f.scott_continuous.monotone ih
+  have hdir := directedOn_range_of_monotone hmono
+  have hle : ∀ n, c n ≤ ScottContinuous.lfp f := fun n => hdir.le_sSup ⟨n, rfl⟩
+  apply le_antisymm
+  · have hlub : IsLUB (Set.range c) (ScottContinuous.lfp f) :=
+      ⟨fun _ hx => by obtain ⟨n, rfl⟩ := hx; exact hle n, fun _ hu => hdir.sSup_le hu⟩
+    refine (f.scott_continuous (Set.range_nonempty c) hdir hlub).2 ?_
+    rintro _ ⟨_, ⟨n, rfl⟩, rfl⟩
+    rw [← hstep]; exact hle (n + 1)
+  · refine hdir.sSup_le ?_
+    rintro _ ⟨n, rfl⟩
+    cases n
+    case zero => exact bot_le
+    case succ m => rw [hstep]; exact f.scott_continuous.monotone (hle m)
